@@ -54,7 +54,7 @@ module.exports = function(robot) {
 	});
 
 	// robot.respond("/streets (.*)$/i", function(msg) 
-        robot.respond("/streets ([0-9]+)(\s.*)?$/i", function(msg) {
+        robot.respond("/streets ([0-9]+)(?: (.*))?$/i", function(msg) {
         	//robot.respond("/streets ([0-9]+)(?: (.*))$/i", function(msg) 
 		//console.log(msg.envelope.message.rawMessage.channel);
 		//console.log(msg);
