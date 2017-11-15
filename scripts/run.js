@@ -22,35 +22,43 @@ var sdk = require("matrix-js-sdk");
 // var client = sdk.createClient("https://matrix.org");
 
 module.exports = function(robot) {
-	robot.respond("/stats (.*)$/i", function(msg) {
-		msg.send("ACK for effort: "+msg.match);
+	robot.respond("/stats ([0-9]+)$/i", function(msg) {
+		//msg.send("ACK for effort: "+msg.match);
 		//console.log(msg.envelope.message.rawMessage.channel);
-		console.log(msg.match);
+		//console.log(msg.match);
 
 		var d = new Date();
 		var cmd ="";
 
 		// return true;
-		if((msg.match[1]) && (msg.match[2])) {
-			var str = msg.match[1] + ' ' + msg.match[2]
-			var res = str.match(/stats streets|stats addresses/g);
-		} else {
-			msg.send("Not implemented, try `stats help me`");
+		if(msg.match[1]) {
+			cmd = "Counting streets in postcode " +  msg.match[1];
+			url = "http://grbtiles.byteless.net/streets/?limit=10&postcode=" + msg.match[1] + "&stats=true";
+
+			request({
+				url: url,
+				json: true
+			},function(error,response,body){
+				if (!error && response.statusCode === 200) {
+					console.log(body); // Print the json response
+					//var sdk = require("matrix-js-sdk");
+					//var client = sdk.createClient("https://matrix.org");
+					msg.send(JSON.stringify(cmd));
+					var obj = body;
+
+					var reply = "\n" + msg.match[1] + " street count: ";
+
+					Object.keys(obj).forEach(function(key, idx) {
+						//console.log(key + ": " + obj[key]);
+						reply=reply + obj[key]['street_total'] + '\n';
+					});
+
+					msg.reply(reply);
+				}
+			});
+
 			return false;
 		}
-
-		//if(msg.match[1]) {
-			// cmd = "/home/glenn/fix_accounts.pl --help";
-			var helptext="Use the following stuff works:\n";
-
-			slackBot.send({
-				text: 'Let me help you!',
-				//channel: msg.envelope.message.rawMessage.channel,
-				username: 'Nicolas Cage',
-				icon_emoji: ':question:',
-			}); 
-			return false;
-		//}
 	});
 
 	// robot.respond("/streets (.*)$/i", function(msg) 
@@ -92,7 +100,7 @@ module.exports = function(robot) {
 					msg.send(JSON.stringify(cmd));
 					var obj = body;
 
-					var reply = "";
+					var reply = "\n";
 
 					Object.keys(obj).forEach(function(key, idx) {
 						//console.log(key + ": " + obj[key]);
