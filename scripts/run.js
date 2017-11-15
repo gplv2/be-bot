@@ -19,7 +19,7 @@ function pad(n, width, z) {
 }
 
 var sdk = require("matrix-js-sdk");
-var client = sdk.createClient("https://matrix.org");
+// var client = sdk.createClient("https://matrix.org");
 
 module.exports = function(robot) {
 	robot.respond("/stats (.*)$/i", function(msg) {
@@ -78,6 +78,8 @@ module.exports = function(robot) {
 			// http://grbtiles.byteless.net/streets/?postcode=1982msg.match[1] 
 
 			//msg.send(JSON.stringify(url));
+			//client.setPresence("online");
+			//robot.matrixClient.client.setPresence("online");
 
 			request({
 				url: url,
@@ -88,7 +90,17 @@ module.exports = function(robot) {
 					//var sdk = require("matrix-js-sdk");
 					//var client = sdk.createClient("https://matrix.org");
 					msg.send(JSON.stringify(cmd));
-					msg.reply(JSON.stringify(body));
+					var obj = body;
+
+					var reply = "";
+
+					Object.keys(obj).forEach(function(key, idx) {
+						//console.log(key + ": " + obj[key]);
+						reply=reply + obj[key]['sname'] + " (" + obj[key]['dataurl'] + ' )\n';
+					});
+
+					msg.reply(reply);
+
 /*
 					slackBot.send({
 						//text: 'Put the bunny back in the box.',
