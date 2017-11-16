@@ -1,11 +1,11 @@
-// Hubot V1 by Glenn Plas for OSM.BE
-//
 // Commands:
 // hubot streets <postcode> [partialstring] - searches for streetlist in postcode
-// hubot stats  <postcode> - 
+// hubot streetmap <postcode> [partialstring] [cycle|mapnik] - creates a static image given by the bounds of the street we search
+// hubot stats <postcode> - Shows you a count for the number of streets in that postcode
+//
+// hubot author Glenn Plas for OSM.BE
 
 
-//var slackBot = require('slack-bot')('https://hooks.slack.com/services/TT0ANGLKK8/TB0ANVAUH3/SAMsIzvHkcwyzbVEIf6B2aey');
 
 var request = require('request');
 var slackBot = require('hubot-matrix');
@@ -18,6 +18,7 @@ function pad(n, width, z) {
   return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
 }
 
+//var slackBot = require('slack-bot')('https://hooks.slack.com/services/TT0ANGLKK8/TB0ANVAUH3/SAMsIzvHkcwyzbVEIf6B2aey');
 // var sdk = require("matrix-js-sdk");
 // var client = sdk.createClient("https://matrix.org");
 
