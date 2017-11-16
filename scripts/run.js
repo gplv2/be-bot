@@ -25,7 +25,7 @@ function pad(n, width, z) {
 
 module.exports = function(robot) {
 	console.log(robot);
-        robot.respond("/streetmap ([0-9]+)(?: (\w+))?(?: (.*))?$/i", function(msg) {
+        robot.respond("/streetmap ([0-9]+)(?: (.*))?$/i", function(msg) {
 		// Call static map generator http://staticmap.openstreetmap.de/staticmap.php?center=43.714728,5.998672&zoom=14&size=865x512&maptype=mapnik
 		// markers=40.702147,-74.015794,lightblue1|40.711614,-74.012318,lightblue2|40.718217,-73.998284,lightblue3
 		// maptype=cycle
@@ -34,20 +34,29 @@ module.exports = function(robot) {
 		//console.log(msg.envelope.message.rawMessage.channel);
 		//console.log(msg.match);
 
-		var d = new Date();
 		var cmd ="";
+		var d = new Date();
 		var maptype="mapnik";
-		if(msg.match[3]=="cycle") {
-			maptype="cycle";
-		} else {
-			maptype="mapnik";
+
+		var searchstring="";
+		if(msg.match[2]) {
+			var myString = msg.match[2]
+			var splits = myString.split(' ', 2);
+			if(splits[1]=="cycle") {
+				maptype="cycle";
+				searchstring=splits[0];
+			} else if(splits[1]=="mapnik") {
+				maptype="mapnik";
+				searchstring=splits[0];
+			} else {
+				searchstring=myString;
+			}
 		}
 
 		// return true;
 		if(msg.match[1]) {
-			cmd = "building static map from street in postcode " +  msg.match[1];
 			if(msg.match[2]) {
-				url = "http://grbtiles.byteless.net/streets/?limit=10&postcode=" + msg.match[1] + "&meta=map&search=" + msg.match[2] ;
+				url = "http://grbtiles.byteless.net/streets/?limit=10&postcode=" + msg.match[1] + "&meta=map&search=" + searchstring;
 			} else {
 				url = "http://grbtiles.byteless.net/streets/?limit=10&postcode=" + msg.match[1] + "&meta=map";
 			}
@@ -60,13 +69,12 @@ module.exports = function(robot) {
 					//console.log(body); // Print the json response
 					//var sdk = require("matrix-js-sdk");
 					//var client = sdk.createClient("https://matrix.org");
-					msg.send(cmd);
-
 					var obj = body;
 					console.log(obj);
 
 					if (obj.error) {
 						msg.reply("API reply: " +obj.error);
+						return false;
 					}
 
 					/*
@@ -80,6 +88,9 @@ module.exports = function(robot) {
 					// http://staticmap.openstreetmap.de/staticmap.php?center=43.714728,5.998672&zoom=14&size=865x512&maptype=mapnik
 					// Calculate the center of both values
 					if (obj.b && obj.t && obj.r && obj.l ) {
+						cmd = "building static map from " + obj.name + " for postcode " +  msg.match[1];
+						msg.send(cmd);
+
 						var center =geolib.getCenterOfBounds([
 							{latitude: obj.b, longitude: obj.l},
 							{latitude: obj.t, longitude: obj.r},
@@ -88,10 +99,13 @@ module.exports = function(robot) {
 						var smap = "http://staticmap.openstreetmap.de/staticmap.php?center="+ center.latitude + "," + center.longitude + "&zoom=17&size=1865x1512&maptype=" + maptype;
 
 						msg.reply(smap);
+					} else {
+						cmd = "Whoops! CRAB street object source has undefined coordinates!" + JSON.stringify(error);
+						msg.reply(cmd);
 					}
 				} else {
 					cmd = "Whoops! Houston, we have a problem: " + JSON.stringify(error);
-					msg.send(cmd);
+					msg.reply(cmd);
 				}
 			});
 
