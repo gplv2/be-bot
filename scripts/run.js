@@ -18,7 +18,6 @@ function pad(n, width, z) {
   return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
 }
 
-
 // var sdk = require("matrix-js-sdk");
 // var client = sdk.createClient("https://matrix.org");
 
@@ -38,6 +37,7 @@ module.exports = function(robot) {
         var maptype="mapnik";
 
         var searchstring="";
+        // Pick off last stuff / space separated
         if(msg.match[2]) {
             var myString = msg.match[2]
             var splits = myString.split(' ', 2);
@@ -52,7 +52,6 @@ module.exports = function(robot) {
             }
         }
 
-        // return true;
         if(msg.match[1]) {
             if(msg.match[2]) {
                 url = "http://grbtiles.byteless.net/streets/?limit=10&postcode=" + msg.match[1] + "&meta=map&search=" + searchstring;
@@ -84,9 +83,10 @@ module.exports = function(robot) {
                         reply=reply + obj[key]['street_total'] + '\n';
                     });
                     */
-                    // http://staticmap.openstreetmap.de/staticmap.php?center=43.714728,5.998672&zoom=14&size=865x512&maptype=mapnik
-                    // Calculate the center of both values
+
+                    // Calculate the center of both values from crab api
                     if (obj.b && obj.t && obj.r && obj.l ) {
+                        // http://staticmap.openstreetmap.de/staticmap.php?center=43.714728,5.998672&zoom=14&size=865x512&maptype=mapnik
                         cmd = "building static map from " + obj.name + " for postcode " +  msg.match[1];
                         msg.send(cmd);
 
@@ -94,7 +94,7 @@ module.exports = function(robot) {
                             {latitude: obj.b, longitude: obj.l},
                             {latitude: obj.t, longitude: obj.r},
                         ]);
-                        //  {"latitude": centerLat, "longitude": centerLng}
+                        //  returns {"latitude": centerLat, "longitude": centerLng}
                         var smap = "http://staticmap.openstreetmap.de/staticmap.php?center="+ center.latitude + "," + center.longitude + "&zoom=17&size=1865x1512&maptype=" + maptype;
 
                         msg.reply(smap);
@@ -107,7 +107,6 @@ module.exports = function(robot) {
                     msg.reply(cmd);
                 }
             });
-
             return false;
         }
     });
