@@ -11,6 +11,7 @@
 //var slackBot = require('slack-bot')('https://hooks.slack.com/services/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');
 var request = require('request');
 var slackBot = require('hubot-matrix');
+var geolib = require('geolib');
 
 function pad(n, width, z) {
   z = z || '0';
@@ -24,7 +25,7 @@ function pad(n, width, z) {
 
 module.exports = function(robot) {
 	console.log(robot);
-        robot.respond("/streetmap ([0-9]+)(?: (.*))?$/i", function(msg) {
+        robot.respond("/streetmap ([0-9]+)(?: (.*))?(?: (.*))?$/i", function(msg) {
 		// Call static map generator http://staticmap.openstreetmap.de/staticmap.php?center=43.714728,5.998672&zoom=14&size=865x512&maptype=mapnik
 		// markers=40.702147,-74.015794,lightblue1|40.711614,-74.012318,lightblue2|40.718217,-73.998284,lightblue3
 		// maptype=cycle
@@ -35,6 +36,12 @@ module.exports = function(robot) {
 
 		var d = new Date();
 		var cmd ="";
+		var maptype="mapnik";
+		if(msg.match[3]=="cycle") {
+			maptype="cycle";
+		} else {
+			maptype="mapnik";
+		}
 
 		// return true;
 		if(msg.match[1]) {
@@ -50,13 +57,17 @@ module.exports = function(robot) {
 				json: true
 			},function(error,response,body){
 				if (!error && response.statusCode === 200) {
-					console.log(body); // Print the json response
+					//console.log(body); // Print the json response
 					//var sdk = require("matrix-js-sdk");
 					//var client = sdk.createClient("https://matrix.org");
-					msg.send(JSON.stringify(cmd));
+					msg.send(cmd);
 
 					var obj = body;
 					console.log(obj);
+
+					if (obj.error) {
+						msg.reply("API reply: " +obj.error);
+					}
 
 					/*
 					var reply = "\n" + msg.match[1] + " street count: ";
@@ -67,9 +78,20 @@ module.exports = function(robot) {
 					});
 					*/
 					// http://staticmap.openstreetmap.de/staticmap.php?center=43.714728,5.998672&zoom=14&size=865x512&maptype=mapnik
-					var smap = "http://staticmap.openstreetmap.de/staticmap.php?center="+ obj.b + "," + obj.l + "&zoom=14&size=865x512&maptype=mapnik";
+					// Calculate the center of both values
+					if (obj.b && obj.t && obj.r && obj.l ) {
+						var center =geolib.getCenterOfBounds([
+							{latitude: obj.b, longitude: obj.l},
+							{latitude: obj.t, longitude: obj.r},
+						]);
+						//  {"latitude": centerLat, "longitude": centerLng}
+						var smap = "http://staticmap.openstreetmap.de/staticmap.php?center="+ center.latitude + "," + center.longitude + "&zoom=17&size=1865x1512&maptype=" + maptype;
 
-					msg.reply(smap);
+						msg.reply(smap);
+					}
+				} else {
+					cmd = "Whoops! Houston, we have a problem: " + JSON.stringify(error);
+					msg.send(cmd);
 				}
 			});
 
