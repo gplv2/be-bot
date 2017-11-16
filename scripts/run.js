@@ -25,7 +25,7 @@ function pad(n, width, z) {
 
 module.exports = function(robot) {
 	console.log(robot);
-        robot.respond("/streetmap ([0-9]+)(?: (.*))?(?: (.*))?$/i", function(msg) {
+        robot.respond("/streetmap ([0-9]+)(?: (\w+))?(?: (.*))?$/i", function(msg) {
 		// Call static map generator http://staticmap.openstreetmap.de/staticmap.php?center=43.714728,5.998672&zoom=14&size=865x512&maptype=mapnik
 		// markers=40.702147,-74.015794,lightblue1|40.711614,-74.012318,lightblue2|40.718217,-73.998284,lightblue3
 		// maptype=cycle
