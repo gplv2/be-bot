@@ -12,7 +12,7 @@ var request = require('request');
 var slackBot = require('hubot-matrix');
 // So we can calculate things from source API's
 var geolib = require('geolib');
-var parseString = require('xml2js').parseString;{
+var parseString = require('xml2js').parseString;
 
 var Memcached = require('memcached');
 var memcached = new Memcached('127.0.0.1:11211');
