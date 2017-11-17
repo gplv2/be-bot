@@ -23,9 +23,14 @@ function pad(n, width, z) {
   return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
 }
 
+
 //var slackBot = require('slack-bot')('https://hooks.slack.com/services/TT0ANGLKK8/TB0ANVAUH3/SAMsIzvHkcwyzbVEIf6B2aey');
 // var sdk = require("matrix-js-sdk");
 // var client = sdk.createClient("https://matrix.org");
+//
+//
+var obj = {};
+
 
 module.exports = function(robot) {
     console.log(robot);
@@ -42,65 +47,80 @@ module.exports = function(robot) {
     });
 
     robot.respond("/active(?: (.*))?$/i", function(msg) {
-        var xml = memcached.get( "changesets", function( err, result ){
-            console.dir( result );
-            //xml.push(result);
-        });
+        var changeset_json = {};
+        memcached.get( "changesets", function( err, result ){
+            // console.log( result );
 
-        var url = "http://api.openstreetmap.org/api/0.6/changesets?bbox=2.52,50.64,5.94,51.51";
-        var obj = {};
-
-        if (!xml.length) {
-            request({
-                url: url,
-                json: true
-            },function(error,response,body){
-                if (!error && response.statusCode === 200) {
-                    //console.log(body); // Print the json response
-                    //var sdk = require("matrix-js-sdk");
-                    //var client = sdk.createClient("https://matrix.org");
-                    parseString(body, function (err, result) {
-                        // console.log(result);
-                        if (err) {
-                            msg.reply("API reply: " +err);
-                            return false;
-                        }
-
-                        //console.log(result);
-                        msg.send('Loaded changeset data');
-                        obj=result['osm']['changeset'];
-                        //console.log(obj);
-                        //
-                        memcached.set( "changesets", obj , 300, function( err, result ) {
-                            if ( err ) {
-                                 console.error( err );
-                            }
-                       });
-                    });
-                } else {
-                    cmd = "Whoops! Houston, we have a problem: " + JSON.stringify(error);
-                    msg.reply(cmd);
-                }
-            });
-        }
-        console.log(obj);
-
-        var uarray = {};
-        // var sodasHad = robot.brain.get('totalSodas') * 1 || 0;
-        Object.keys(obj).forEach(function(key, idx) {
-            // console.log(obj[key]);
-            if(uarray[obj[key]['$']['uid']]) {
-                uarray[obj[key]['$']['uid']]=0;
+            if(typeof result =='object' && result) {
+                changeset_json = result;
+                msg.send('Loaded changeset data from memcache');
             } else {
-                uarray[obj[key]['$']['uid']]++;
-            }
-            // console.log(key + ": " + idx);
-            //reply=reply + obj[key]['street_total'] + '\n';
-            //reply=reply + obj[key]['street_total'] + '\n';
-        });
-        console.log(uarray);
+                console.log("No data in cache... contacting API");
+                var url = "http://api.openstreetmap.org/api/0.6/changesets?bbox=2.52,50.64,5.94,51.51";
 
-        msg.reply('OK');
+                request({
+                    url: url,
+                    json: true
+                },function(error,response,body){
+                    if (!error && response.statusCode === 200) {
+                        msg.send('Downloading latest changesets from OSM API');
+                        //console.log(body); // Print the json response
+                        //var sdk = require("matrix-js-sdk");
+                        //var client = sdk.createClient("https://matrix.org");
+                        parseString(body, function (err, result) {
+                            // console.log(result);
+                            if (err) {
+                                msg.reply("API reply: " +err);
+                                return false;
+                            }
+
+                            //console.log(result);
+                            changeset_json=result['osm']['changeset'];
+                            //console.log(changeset_json);
+                            memcached.set( "changesets", changeset_json , 30, function( err, result ) {
+                                if ( err ) {
+                                    console.error( err );
+                                } else {
+                                    msg.send('Stored changeset data in memcache');
+                                }
+                            });
+                        });
+                    } else {
+                        cmd = "Whoops! Houston, we have a problem: " + JSON.stringify(error);
+                        msg.reply(cmd);
+                        return false;
+                    }
+                    console.log(typeof changeset_json);
+                });
+            }
+            console.log("SFASFDAS");
+
+            //if(typeof changeset_json =='object')
+            //console.log(changeset_json);
+	        //return true;
+            console.log(typeof changeset_json);
+
+            return true;
+	
+            var uarray = {};
+            var reply = "";
+            // var sodasHad = robot.brain.get('totalSodas') * 1 || 0;
+            Object.keys(changeset_json).forEach(function(key, idx) {
+                console.log(changeset_json[key]);
+
+                if(uarray[changeset_json[key]['$']['uid']]) {
+                    uarray[changeset_json[key]['$']['uid']]=0;
+                } else {
+                    uarray[changeset_json[key]['$']['uid']]++;
+                }
+                // console.log(key + ": " + idx);
+                //reply=reply + changeset_json[key]['street_total'] + '\n';
+                //reply=reply + changeset_json[key]['street_total'] + '\n';
+            });
+            console.log(reply);
+
+            msg.reply("OK");
+        });
     });
 
     robot.respond("/changeset ([0-9]+)(?: (.*))?$/i", function(msg) {
