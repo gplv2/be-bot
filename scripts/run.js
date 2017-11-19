@@ -14,6 +14,10 @@ var slackBot = require('hubot-matrix');
 var geolib = require('geolib');
 var parseString = require('xml2js').parseString;
 
+// const util = require('util');
+// alternative shortcut
+// console.log(util.inspect(myObject, false, null))
+
 var Memcached = require('memcached');
 var memcached = new Memcached('127.0.0.1:11211');
 
@@ -29,11 +33,85 @@ function pad(n, width, z) {
 // var client = sdk.createClient("https://matrix.org");
 //
 //
-var obj = {};
 
+function getdata() {
+   return promise = new Promise(function(resolve, reject) {
+      var url = "http://api.openstreetmap.org/api/0.6/changesets?bbox=2.52,50.64,5.94,51.51";
+      console.log("Contacting OSM");
+      // do a thing, possibly async, then…
+      var rk = request({
+         url: url,
+         json: true,
+      },function(error,response,body){
+         if (!error && response.statusCode === 200) {
+            console.log("Downloaded changesets OK");
+            //msg.send('Downloaded latest changesets from OSM API');
+            //console.log(body); // Print the json response
+            //var sdk = require("matrix-js-sdk");
+            //var client = sdk.createClient("https://matrix.org");
+            parseString(body, function (err, mresult) {
+               console.log("Parsing results");
+               if (err) {
+                  //msg.reply("API reply: " +err);
+                  reject(Error(err)); 
+               }
+
+               //msg.send('Assigning resuls to my_json');
+               console.log("Sending results");
+               my_json=mresult['osm']['changeset'];
+
+               //console.log(my_json);
+               memcached.set( "changesets", my_json , 30, function( err, mresult2 ) {
+                  if ( err ) {
+                     console.log("Error storing in cache");
+                     console.error( err );
+                  } else {
+                     console.log("Stored in cache");
+                     //msg.send('Stored changeset data in memcache');
+                  }
+               });
+               console.log("Done parsing string");
+               resolve(my_json);
+            });
+         } else {
+            cmd = "Whoops! Houston, we have a problem: " + JSON.stringify(error);
+            reject(Error(cmd)); 
+            //msg.reply(cmd);
+            //return false;
+         }
+         //console.log("Done request");
+      });
+      // console.log(rk, {showHidden: false, depth: null});
+   });
+}
+
+function getcache() {
+   return mpromise = new Promise(function(resolve, reject) {
+      memcached.get( "changesets", function( err, result ){
+         if(err) {
+            console.log( err );
+            reject(Error(err)); 
+         } else {
+             if(typeof result =='object' && result) {
+                 //console.log(result);
+                 console.log("Loading data from cache");
+                 //msg.send('Loaded changeset data from memcache');
+                 resolve(result);
+                 //} else {
+                 //reject(Error('No hit')); 
+             } else {
+                 reject(Error(err));
+             }
+             //msg.reply("OK");
+         }
+      });
+   });
+}
+
+//process.exit(1);
 
 module.exports = function(robot) {
-    console.log(robot);
+    //console.log(robot);
 
     robot.respond(/who is @?([\w .\-]+)\?*$/i, function(res, done) {
         name = res.match[1].trim();
@@ -47,80 +125,70 @@ module.exports = function(robot) {
     });
 
     robot.respond("/active(?: (.*))?$/i", function(msg) {
+        console.log("start");
+
         var changeset_json = {};
-        memcached.get( "changesets", function( err, result ){
-            // console.log( result );
-
-            if(typeof result =='object' && result) {
-                changeset_json = result;
-                msg.send('Loaded changeset data from memcache');
-            } else {
-                console.log("No data in cache... contacting API");
-                var url = "http://api.openstreetmap.org/api/0.6/changesets?bbox=2.52,50.64,5.94,51.51";
-
-                request({
-                    url: url,
-                    json: true
-                },function(error,response,body){
-                    if (!error && response.statusCode === 200) {
-                        msg.send('Downloading latest changesets from OSM API');
-                        //console.log(body); // Print the json response
-                        //var sdk = require("matrix-js-sdk");
-                        //var client = sdk.createClient("https://matrix.org");
-                        parseString(body, function (err, result) {
-                            // console.log(result);
-                            if (err) {
-                                msg.reply("API reply: " +err);
-                                return false;
-                            }
-
-                            //console.log(result);
-                            changeset_json=result['osm']['changeset'];
-                            //console.log(changeset_json);
-                            memcached.set( "changesets", changeset_json , 30, function( err, result ) {
-                                if ( err ) {
-                                    console.error( err );
-                                } else {
-                                    msg.send('Stored changeset data in memcache');
-                                }
-                            });
-                        });
-                    } else {
-                        cmd = "Whoops! Houston, we have a problem: " + JSON.stringify(error);
-                        msg.reply(cmd);
-                        return false;
-                    }
-                    console.log(typeof changeset_json);
-                });
-            }
-            console.log("SFASFDAS");
-
-            //if(typeof changeset_json =='object')
-            //console.log(changeset_json);
-	        //return true;
-            console.log(typeof changeset_json);
-
-            return true;
-	
-            var uarray = {};
-            var reply = "";
-            // var sodasHad = robot.brain.get('totalSodas') * 1 || 0;
-            Object.keys(changeset_json).forEach(function(key, idx) {
-                console.log(changeset_json[key]);
-
-                if(uarray[changeset_json[key]['$']['uid']]) {
-                    uarray[changeset_json[key]['$']['uid']]=0;
-                } else {
-                    uarray[changeset_json[key]['$']['uid']]++;
-                }
-                // console.log(key + ": " + idx);
-                //reply=reply + changeset_json[key]['street_total'] + '\n';
-                //reply=reply + changeset_json[key]['street_total'] + '\n';
+/*
+        getcache().then(function(response) {
+            console.log("Success cache!");
+            changeset_json=response;
+        }, function(error) {
+            console.error("Failed cache promise: !", error);
+            getdata().then(function(mresponse) {
+                //console.log("Success!", response);
+                console.log("Success api promise!");
+                changeset_json=mresponse;
+            }, function(merror) {
+                console.error("Failed api promise: !", merror);
             });
-            console.log(reply);
-
-            msg.reply("OK");
         });
+        */
+
+        getcache().then(function(response) {
+            console.log("Success cache!");
+            changeset_json=response;
+            //console.dir(changeset_json);
+        }).catch(function(err) {
+            console.dir("ERR", err);
+            // catch any error that happened along the way
+            getdata().then(function(mresponse) {
+                //console.log("Success!", response);
+                console.log("Success api promise!");
+                changeset_json=mresponse;
+                //console.dir(changeset_json);
+            }, function(merror) {
+                console.error("Failed api promise: !", merror);
+            });
+        }).then(function() {
+            console.log("after downloaded ?");
+            //console.dir(changeset_json);
+
+            if(typeof changeset_json == 'object') {
+                console.log("IF object");
+                console.error(changeset_json, null);
+
+                var uarray = {};
+                var reply = "";
+                // var sodasHad = robot.brain.get('totalSodas') * 1 || 0;
+                Object.keys(changeset_json).forEach(function(key, idx) {
+                    console.log(changeset_json[key]);
+
+                    if(uarray[changeset_json[key]['$']['uid']]) {
+                        uarray[changeset_json[key]['$']['uid']]=0;
+                    } else {
+                        uarray[changeset_json[key]['$']['uid']]++;
+                    }
+                    // console.log(key + ": " + idx);
+                    //reply=reply + changeset_json[key]['street_total'] + '\n';
+                    //console.log(reply);
+                    console.log("OK HERE");
+                });
+            } else {
+                console.log("NO JSON HERE");
+            }
+            console.log("END");
+            console.log("Done");
+        })
     });
 
     robot.respond("/changeset ([0-9]+)(?: (.*))?$/i", function(msg) {
@@ -134,6 +202,8 @@ module.exports = function(robot) {
         //msg.send("ACK for effort: "+msg.match);
         //console.log(msg.envelope.message.rawMessage.channel);
         //console.log(msg.match);
+        //
+        var obj = {};
 
         var cmd ="";
         var d = new Date();
@@ -454,5 +524,5 @@ module.exports = function(robot) {
     });
     */
 
-    memcached.end(); 
+    //memcached.end(); 
 };
