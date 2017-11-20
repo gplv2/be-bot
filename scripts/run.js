@@ -9,6 +9,8 @@
 
 
 var request = require('request');
+var rp = require('request-promise');
+
 var slackBot = require('hubot-matrix');
 // So we can calculate things from source API's
 var geolib = require('geolib');
@@ -33,57 +35,6 @@ function pad(n, width, z) {
 // var client = sdk.createClient("https://matrix.org");
 //
 //
-
-function getdata() {
-   return promise = new Promise(function(resolve, reject) {
-      var url = "http://api.openstreetmap.org/api/0.6/changesets?bbox=2.52,50.64,5.94,51.51";
-      console.log("Contacting OSM");
-      // do a thing, possibly async, then…
-      var rk = request({
-         url: url,
-         json: true,
-      },function(error,response,body){
-         if (!error && response.statusCode === 200) {
-            console.log("Downloaded changesets OK");
-            //msg.send('Downloaded latest changesets from OSM API');
-            //console.log(body); // Print the json response
-            //var sdk = require("matrix-js-sdk");
-            //var client = sdk.createClient("https://matrix.org");
-            parseString(body, function (err, mresult) {
-               console.log("Parsing results");
-               if (err) {
-                  //msg.reply("API reply: " +err);
-                  reject(Error(err)); 
-               }
-
-               //msg.send('Assigning resuls to my_json');
-               console.log("Sending results");
-               my_json=mresult['osm']['changeset'];
-
-               //console.log(my_json);
-               memcached.set( "changesets", my_json , 30, function( err, mresult2 ) {
-                  if ( err ) {
-                     console.log("Error storing in cache");
-                     console.error( err );
-                  } else {
-                     console.log("Stored in cache");
-                     //msg.send('Stored changeset data in memcache');
-                  }
-               });
-               console.log("Done parsing string");
-               resolve(my_json);
-            });
-         } else {
-            cmd = "Whoops! Houston, we have a problem: " + JSON.stringify(error);
-            reject(Error(cmd)); 
-            //msg.reply(cmd);
-            //return false;
-         }
-         //console.log("Done request");
-      });
-      // console.log(rk, {showHidden: false, depth: null});
-   });
-}
 
 function getcache() {
    return mpromise = new Promise(function(resolve, reject) {
@@ -125,61 +76,29 @@ module.exports = function(robot) {
     });
 
     robot.respond("/active(?: (.*))?$/i", function(msg) {
-        console.log("start");
 
-        var changeset_json = {};
-/*
-        getcache().then(function(response) {
-            console.log("Success cache!");
-            changeset_json=response;
-        }, function(error) {
-            console.error("Failed cache promise: !", error);
-            getdata().then(function(mresponse) {
-                //console.log("Success!", response);
-                console.log("Success api promise!");
-                changeset_json=mresponse;
-            }, function(merror) {
-                console.error("Failed api promise: !", merror);
-            });
-        });
-        */
+        function parseOutput(changes_json) {
+            console.log("processing retrieval ...");
+            //console.dir(changes_json);
 
-        getcache().then(function(response) {
-            console.log("Success cache!");
-            changeset_json=response;
-            //console.dir(changeset_json);
-        }).catch(function(err) {
-            console.dir("ERR", err);
-            // catch any error that happened along the way
-            getdata().then(function(mresponse) {
-                //console.log("Success!", response);
-                console.log("Success api promise!");
-                changeset_json=mresponse;
-                //console.dir(changeset_json);
-            }, function(merror) {
-                console.error("Failed api promise: !", merror);
-            });
-        }).then(function() {
-            console.log("after downloaded ?");
-            //console.dir(changeset_json);
-
-            if(typeof changeset_json == 'object') {
+            if(typeof changes_json == 'object' && changes_json !== null) {
                 console.log("IF object");
-                console.error(changeset_json, null);
+                //console.error(changes_json, null);
+                //process.exit(1);
 
                 var uarray = {};
                 var reply = "";
                 // var sodasHad = robot.brain.get('totalSodas') * 1 || 0;
-                Object.keys(changeset_json).forEach(function(key, idx) {
-                    console.log(changeset_json[key]);
+                Object.keys(changes_json).forEach(function(key, idx) {
+                    console.log(changes_json[key]);
 
-                    if(uarray[changeset_json[key]['$']['uid']]) {
-                        uarray[changeset_json[key]['$']['uid']]=0;
+                    if(uarray[changes_json[key]['$']['uid']]) {
+                        uarray[changes_json[key]['$']['uid']]=0;
                     } else {
-                        uarray[changeset_json[key]['$']['uid']]++;
+                        uarray[changes_json[key]['$']['uid']]++;
                     }
                     // console.log(key + ": " + idx);
-                    //reply=reply + changeset_json[key]['street_total'] + '\n';
+                    //reply=reply + changes_json[key]['street_total'] + '\n';
                     //console.log(reply);
                     console.log("OK HERE");
                 });
@@ -187,8 +106,55 @@ module.exports = function(robot) {
                 console.log("NO JSON HERE");
             }
             console.log("END");
-            console.log("Done");
-        })
+            return false;
+        }
+
+        // Get Belgian changesets
+        var url = "http://api.openstreetmap.org/api/0.6/changesets?bbox=2.52,50.64,5.94,51.51";
+
+        var options = {
+            uri: url,
+            /*
+            qs: {
+                access_token: '12434asfdsdfw3' // -> uri + '?access_token=xxxxx%20xxxxx'
+            },
+            */
+            headers: {
+                'User-Agent': 'Request-Promise [memcached] - BEBOT osmbe bot https://riot.im/app/?#/room/#osmbe:matrix.org'
+            },
+            json: false // if true: Automatically parses the JSON string in the response
+        };
+
+        getcache().then(function(response) {
+            console.log("Cache hit");
+            parseOutput(response);
+        }).catch(function (error) {
+            console.log("Cache miss");
+            //var changeset_json = { response: null };   // Object to hold the async result
+            rp(options).then(function (repos) {
+                console.log('%d long response', repos.length);
+                //var client = sdk.createClient("https://matrix.org");
+                parseString(repos, function (err, mresult) {
+                    console.log("Parsing results");
+                    memcached.set( "changesets", mresult['osm']['changeset'] , 30, function( err, mresult2 ) {
+                        if ( err ) {
+                            console.error( err );
+                            console.log("Error storing in cache");
+                        } else {
+                            console.log("Stored in cache");
+                        }
+                    });
+                    parseOutput(mresult['osm']['changeset']);
+                    console.log("Done parsing string");
+                });
+            }).catch(function (error) {
+                console.log(error);
+                console.log("Failure with download changeset");
+                // API call failed...
+                cmd = "Whoops! Houston, we have a problem: " + JSON.stringify(error);
+                console.error(cmd);
+            });
+        });
     });
 
     robot.respond("/changeset ([0-9]+)(?: (.*))?$/i", function(msg) {
