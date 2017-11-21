@@ -87,26 +87,114 @@ module.exports = function(robot) {
                 //process.exit(1);
 
                 var uarray = {};
-                var reply = "";
                 // var sodasHad = robot.brain.get('totalSodas') * 1 || 0;
                 Object.keys(changes_json).forEach(function(key, idx) {
-                    console.log(changes_json[key]);
+                    //console.log(key);
+                    // console.log("OK ROW");
+                    //console.error(changes_json[key], null);
+                    //console.log(changes_json[key]['$']['uid']);
+                    var uid = changes_json[key]['$']['uid'];
+                    var cs_id = changes_json[key]['$']['id'];
 
-                    if(uarray[changes_json[key]['$']['uid']]) {
-                        uarray[changes_json[key]['$']['uid']]=0;
-                    } else {
-                        uarray[changes_json[key]['$']['uid']]++;
+                    if(!uarray[uid]) {
+                        uarray[uid] = {};
+                        uarray[uid]['counter'] = 0;
+                        uarray[uid]['changesets'] = [];
                     }
+
+                    if(!uarray[uid]['profile']) {
+                        uarray[uid]['profile'] = changes_json[key]['$'];
+                    }
+
+                    if(uarray[uid]['counter'] || uarray[uid]['counter'] === 0 ) {
+                        uarray[uid]['counter']++;
+                        uarray[uid]['changesets'].push(cs_id);
+                    }
+
+                    //console.error(changes_json[key], null);
+                    //process.exit(1);
                     // console.log(key + ": " + idx);
-                    //reply=reply + changes_json[key]['street_total'] + '\n';
-                    //console.log(reply);
-                    console.log("OK HERE");
+                    /*
+                     *   '6781225': 
+                     *      { counter: 3,
+                     *        changesets: [ '53957855', '53957617', '53957033' ],
+                     *        profile: 
+                     *        { id: '53957855',
+                        *        user: 'Juvan',
+                        *        uid: '6781225',
+                        *       created_at: '2017-11-20T19:03:45Z',
+                        *      closed_at: '2017-11-20T19:03:45Z',
+                        *     open: 'false',
+                     *    min_lat: '50.7067433',
+                     *   min_lon: '5.6036214',
+                     *  max_lat: '50.7186163',
+                     *                                                                                              max_lon: '5.6211756',
+                     *                                                                                                      comments_count: '0' } },
+                     *
+                     */
                 });
+
+                // Extend object to support sort method
+                function sortObj(obj) {
+                    "use strict";
+
+                    function Obj2Array(obj) {
+                        var newObj = [];
+                        for (var key in obj) {
+                            if (!obj.hasOwnProperty(key)) return;
+                            var value = [key, obj[key]];
+                            newObj.push(value);
+                        }
+                        return newObj;
+                    }
+
+                    var sortedArray = Obj2Array(obj).sort(function(a, b) {
+                        if (a[1] < b[1]) return -1;
+                        if (a[1] > b[1]) return 1;
+                        return 0;
+                    });
+
+                    function recreateSortedObject(targ) {
+                        var sortedObj = {};
+                        for (var i = 0; i < targ.length; i++) {
+                            sortedObj[targ[i][0]] = targ[i][1];
+                        }
+                        return sortedObj;
+                    }
+                    return recreateSortedObject(sortedArray);
+                }
+
+                var sortedObj = sortObj(uarray);
+
+                Object.invert = function (obj) {
+
+                    var new_obj = {};
+
+                    for (var prop in obj) {
+                        if(obj.hasOwnProperty(prop)) {
+                            new_obj[obj[prop]] = prop;
+                        }
+                    }
+
+                    return new_obj;
+                };
+                // var invertedList = Object.invert(uarray);
+
+
+                var reply="";
+                Object.keys(uarray).forEach(function(key, idx) {
+                    var uid = uarray[key]['profile']['uid'];
+                    var name = uarray[key]['profile']['user'];
+                    var counts = uarray[key]['counter'];
+                    var sets = uarray[key]['changsets'];
+
+                    reply=reply + "User: " + name + " # changesets: " + counts +'\n';
+                });
+                msg.reply(reply); 
             } else {
                 console.log("NO JSON HERE");
             }
             console.log("END");
-            return false;
         }
 
         // Get Belgian changesets
@@ -126,17 +214,20 @@ module.exports = function(robot) {
         };
 
         getcache().then(function(response) {
-            console.log("Cache hit");
-            parseOutput(response);
+	    if (response) {
+            	console.log("Cache hit");
+            	parseOutput(response);
+	    } else{
+            	console.log("Weird stuff shit");
+	    }
         }).catch(function (error) {
             console.log("Cache miss");
-            //var changeset_json = { response: null };   // Object to hold the async result
             rp(options).then(function (repos) {
                 console.log('%d long response', repos.length);
                 //var client = sdk.createClient("https://matrix.org");
                 parseString(repos, function (err, mresult) {
                     console.log("Parsing results");
-                    memcached.set( "changesets", mresult['osm']['changeset'] , 30, function( err, mresult2 ) {
+                    memcached.set( "changesets", mresult['osm']['changeset'] , 120, function( err, mresult2 ) {
                         if ( err ) {
                             console.error( err );
                             console.log("Error storing in cache");
@@ -148,9 +239,9 @@ module.exports = function(robot) {
                     console.log("Done parsing string");
                 });
             }).catch(function (error) {
+                // API call failed...
                 console.log(error);
                 console.log("Failure with download changeset");
-                // API call failed...
                 cmd = "Whoops! Houston, we have a problem: " + JSON.stringify(error);
                 console.error(cmd);
             });
