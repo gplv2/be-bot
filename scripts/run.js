@@ -253,7 +253,7 @@ module.exports = function(robot) {
         // http://osmhv.openstreetmap.de/changeset.jsp?id=53964940
         set = msg.match[1].trim();
 
-        var cmd ="Yeah. Lets play the blame game!";
+        var cmd ="Yeah. Lets play the blame game!\n";
         msg.send(cmd);
 
         osmhv_url = "http://osmhv.openstreetmap.de/changeset.jsp?id=" + set;
@@ -261,9 +261,9 @@ module.exports = function(robot) {
         achav_url = "https://overpass-api.de/achavi/?changeset=" + set;
         osm_url = "http://www.openstreetmap.org/browse/changeset/" + set;
 
-        var reply = "Changeset OSM: " + osm_url + "\n"
-                    + "Achavi diff  : " + osm_url + "\n"
-                    + "osmhv_url    : " + osm_url + "\n";
+        var reply = "\nChangeset OSM: " + osm_url + "\n"
+                    + "Achavi diff  : " + achav_url + "\n"
+                    + "osmhv_url    : " + osmhv_url + "\n";
 
         msg.reply(reply);
         //url = "http://grbtiles.byteless.net/streets/?limit=10&postcode=" + msg.match[1] + "&meta=map";
