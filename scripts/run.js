@@ -8,6 +8,10 @@
 // author Glenn Plas for OSM.BE
 
 
+//var slackBot = require('slack-bot')('https://hooks.slack.com/services/TT0ANGLKK8/TB0ANVAUH3/SAMsIzvHkcwyzbVEIf6B2aey');
+// var sdk = require("matrix-js-sdk");
+// var client = sdk.createClient("https://matrix.org");
+//
 var request = require('request');
 var rp = require('request-promise');
 
@@ -29,12 +33,13 @@ function pad(n, width, z) {
   return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
 }
 
+String.prototype.lpad = function(padString, length) {
+	var str = this;
+	while (str.length < length)
+		str = padString + str;
+	return str;
+}
 
-//var slackBot = require('slack-bot')('https://hooks.slack.com/services/TT0ANGLKK8/TB0ANVAUH3/SAMsIzvHkcwyzbVEIf6B2aey');
-// var sdk = require("matrix-js-sdk");
-// var client = sdk.createClient("https://matrix.org");
-//
-//
 
 function getcache() {
    return mpromise = new Promise(function(resolve, reject) {
@@ -73,6 +78,10 @@ module.exports = function(robot) {
             // Do something interesting here.. 
             res.send(name + " is user " + user, done);
         }
+    });
+
+    robot.respond("/lost$/i", function(msg) {
+	msg.send("You can go to <https://www.google.com|google> and search.");
     });
 
     robot.respond("/hotshots(?: (.*))?$/i", function(msg) {
@@ -131,29 +140,40 @@ module.exports = function(robot) {
                 console.log('sortedObj:');
                 //console.dir(sortedObj, null);
 
+                var base = "http://www.openstreetmap.org/changeset/";
                 var reply="\n";
                 Object.keys(sortedObj).forEach(function(key, idx) {
-                    var uid = sortedObj[key]['profile']['uid'];
-                    var name = sortedObj[key]['profile']['user'];
-                    var counts = sortedObj[key]['counter'];
-                    var sets = sortedObj[key]['changesets'];
+                   var uid = sortedObj[key]['profile']['uid'];
+                   var name = sortedObj[key]['profile']['user'];
+                   var counts = sortedObj[key]['counter'].toString();
+                   var sets = sortedObj[key]['changesets'];
 
-                    var closed = sortedObj[key]['profile']['closed_at'];
-	            var newDate = new Date(closed);
+                   var closed = sortedObj[key]['profile']['closed_at'];
+                   var newDate = new Date(closed);
+                   var urls = [];
 
-                    //console.log(sortedObj[key]);
-                    //process.exit(1);
+                   for (var i = 0; i < sets.length; i++) {
+                      urls.push(base + sets[i]);
+                   }
 
-                    reply=reply + newDate.toUTCString() + " :  User: " + name + " # changesets: " + counts + " ( " +sets.toString()+" ) " + '\n';
+                   var allurls= urls.join(' ');
+
+                   //console.log(sortedObj[key]);
+                   //process.exit(1);
+
+                   reply=reply //+ newDate.toGMTDateString() 
+                      + " # changesets: " + counts.lpad(" ", 2) 
+                      + " :  User: " + name 
+                      + " ( " +allurls+" ) " + '\n';
                 });
-                msg.reply(reply); 
+               msg.reply(reply); 
             } else {
-                console.log("NO JSON HERE");
+               console.log("NO JSON HERE");
             }
-            console.log("END");
+           console.log("END");
         }
 
-        // Get Belgian changesets
+       // Get Belgian changesets
         var url = "http://api.openstreetmap.org/api/0.6/changesets?bbox=2.52,50.64,5.94,51.51";
 
         var options = {
@@ -178,12 +198,13 @@ module.exports = function(robot) {
 	    }
         }).catch(function (error) {
             console.log("Cache miss");
+	    msg.send("Changeset list not cached, contacting OSM API...");
             rp(options).then(function (repos) {
                 console.log('%d long response', repos.length);
                 //var client = sdk.createClient("https://matrix.org");
                 parseString(repos, function (err, mresult) {
                     console.log("Parsing results");
-                    memcached.set( "changesets", mresult['osm']['changeset'] , 120, function( err, mresult2 ) {
+                    memcached.set( "changesets", mresult['osm']['changeset'] , 300, function( err, mresult2 ) {
                         if ( err ) {
                             console.error( err );
                             console.log("Error storing in cache");
