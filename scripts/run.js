@@ -34,10 +34,10 @@ function pad(n, width, z) {
 }
 
 String.prototype.lpad = function(padString, length) {
-	var str = this;
-	while (str.length < length)
-		str = padString + str;
-	return str;
+    var str = this;
+    while (str.length < length)
+        str = padString + str;
+    return str;
 }
 
 
@@ -67,21 +67,42 @@ function getcache() {
 //process.exit(1);
 
 module.exports = function(robot) {
-    //console.log(robot);
+   //console.log(robot);
+   robot.respond(/who is @?([\w .\-]+)\?*$/i, function(msg) {
+      name = msg.match[1].trim();
+      //users = robot.brain.usersForFuzzyName(name);
+      var reply="";
+      switch(name) {
+         case 'escada':
+            reply="Indian name : He who walks with dogs: The Dogwalker, Mapper name: MicroMapper Inc.";
+            break;
+         case 'glenn':
+            reply="Indian name : Overpass boy: The Overpasswhisperer, Mapper name: Tha Validator.";
+            break;
+         case 'joost':
+            reply="Indian name : The OSM planner:  BoardRunner, Mapper name: JOSM what/who?";
+            break;
+         case 'lodde1949':
+            reply="Indian name : He who maps 24/7: The Mapinator, Mapper name: The-mapper-that-never-sleeps";
+            break;
+         case 'jonathan':
+            reply="Indian name : A rising osm.Be-Star: Legoboy,  Mapper name: The tiler";
+            break;
+         case 'xivk':
+            reply="Indian name : Dances with OSM: Chief OSMBE,  Mapper name: The Boss Router";
+            break;
+         default:
+            reply="Sorry, " + name + " is way too cool to comment on!";
+      }
 
-    robot.respond(/who is @?([\w .\-]+)\?*$/i, function(res, done) {
-        name = res.match[1].trim();
-        users = robot.brain.usersForFuzzyName(name);
-
-        if(users.length >= 1) {
-            var user = users[0]
-            // Do something interesting here.. 
-            res.send(name + " is user " + user, done);
-        }
-    });
+      //if(users.length >= 1) {
+         //var user = users[0]
+         // Do something interesting here.. 
+         msg.reply(reply);
+   });
 
     robot.respond("/lost$/i", function(msg) {
-	msg.send("You can go to <https://www.google.com|google> and search.");
+   msg.send("You can go to <https://www.google.com|google> and search.");
     });
 
     robot.respond("/hotshots(?: (.*))?$/i", function(msg) {
@@ -141,7 +162,7 @@ module.exports = function(robot) {
                 //console.dir(sortedObj, null);
 
                 var base = "http://www.openstreetmap.org/changeset/";
-                var reply="\n";
+                var reply="Recent belgian mappers: \n";
                 Object.keys(sortedObj).forEach(function(key, idx) {
                    var uid = sortedObj[key]['profile']['uid'];
                    var name = sortedObj[key]['profile']['user'];
@@ -153,7 +174,8 @@ module.exports = function(robot) {
                    var urls = [];
 
                    for (var i = 0; i < sets.length; i++) {
-                      urls.push(base + sets[i]);
+                      //urls.push(base + sets[i]);
+                      urls.push(sets[i]);
                    }
 
                    var allurls= urls.join(' ');
@@ -190,15 +212,15 @@ module.exports = function(robot) {
         };
 
         getcache().then(function(response) {
-	    if (response) {
-            	console.log("Cache hit");
-            	parseOutput(response);
-	    } else{
-            	console.log("Weird stuff shit");
-	    }
+        if (response) {
+                console.log("Cache hit");
+                parseOutput(response);
+        } else{
+                console.log("Weird stuff shit");
+        }
         }).catch(function (error) {
             console.log("Cache miss");
-	    msg.send("Changeset list not cached, contacting OSM API...");
+        msg.send("Changeset list not cached, contacting OSM API...");
             rp(options).then(function (repos) {
                 console.log('%d long response', repos.length);
                 //var client = sdk.createClient("https://matrix.org");
@@ -228,94 +250,23 @@ module.exports = function(robot) {
     robot.respond("/changeset ([0-9]+)(?: (.*))?$/i", function(msg) {
         // BBOX changeset // Belgum : 2.52, 50.64, 5.94, 51.51
         // http://api.openstreetmap.org/api/0.6/changesets?bbox=2.52,50.64,5.94,51.51&output=json
-        //
-        // Call static map generator http://staticmap.openstreetmap.de/staticmap.php?center=43.714728,5.998672&zoom=14&size=865x512&maptype=mapnik
-        // markers=40.702147,-74.015794,lightblue1|40.711614,-74.012318,lightblue2|40.718217,-73.998284,lightblue3
-        // maptype=cycle
+        // http://osmhv.openstreetmap.de/changeset.jsp?id=53964940
+        set = msg.match[1].trim();
 
-        //msg.send("ACK for effort: "+msg.match);
-        //console.log(msg.envelope.message.rawMessage.channel);
-        //console.log(msg.match);
-        //
-        var obj = {};
+        var cmd ="Yeah. Lets play the blame game!";
+        msg.send(cmd);
 
-        var cmd ="";
-        var d = new Date();
-        var maptype="mapnik";
+        osmhv_url = "http://osmhv.openstreetmap.de/changeset.jsp?id=" + set;
+        achav_url_dev = "http://nrenner.github.io/achavi/?changeset=" + set;
+        achav_url = "https://overpass-api.de/achavi/?changeset=" + set;
+        osm_url = "http://www.openstreetmap.org/browse/changeset/" + set;
 
-        var searchstring="";
-        // Pick off last stuff / space separated
-        if(msg.match[2]) {
-            var myString = msg.match[2]
-            var splits = myString.split(' ', 2);
-            if(splits[1]=="cycle") {
-                maptype="cycle";
-                searchstring=splits[0];
-            } else if(splits[1]=="mapnik") {
-                maptype="mapnik";
-                searchstring=splits[0];
-            } else {
-                searchstring=myString;
-            }
-        }
+        var reply = "Changeset OSM: " + osm_url + "\n"
+                    + "Achavi diff  : " + osm_url + "\n"
+                    + "osmhv_url    : " + osm_url + "\n";
 
-        if(msg.match[1]) {
-            if(msg.match[2]) {
-                url = "http://grbtiles.byteless.net/streets/?limit=10&postcode=" + msg.match[1] + "&meta=map&search=" + searchstring;
-            } else {
-                url = "http://grbtiles.byteless.net/streets/?limit=10&postcode=" + msg.match[1] + "&meta=map";
-            }
-
-            request({
-                url: url,
-                json: true
-            },function(error,response,body){
-                if (!error && response.statusCode === 200) {
-                    //console.log(body); // Print the json response
-                    //var sdk = require("matrix-js-sdk");
-                    //var client = sdk.createClient("https://matrix.org");
-                    var obj = body;
-                    console.log(obj);
-
-                    if (obj.error) {
-                        msg.reply("API reply: " +obj.error);
-                        return false;
-                    }
-
-                    /*
-            var reply = "\n" + msg.match[1] + " street count: ";
-
-            Object.keys(obj).forEach(function(key, idx) {
-                    //console.log(key + ": " + obj[key]);
-            reply=reply + obj[key]['street_total'] + '\n';
-            });
-            */
-
-                    // Calculate the center of both values from crab api
-                    if (obj.b && obj.t && obj.r && obj.l ) {
-                        // http://staticmap.openstreetmap.de/staticmap.php?center=43.714728,5.998672&zoom=14&size=865x512&maptype=mapnik
-                        cmd = "building static map from " + obj.name + " for postcode " +  msg.match[1];
-                        msg.send(cmd);
-
-                        var center =geolib.getCenterOfBounds([
-                            {latitude: obj.b, longitude: obj.l},
-                            {latitude: obj.t, longitude: obj.r},
-                        ]);
-                        //  returns {"latitude": centerLat, "longitude": centerLng}
-                        var smap = "http://staticmap.openstreetmap.de/staticmap.php?center="+ center.latitude + "," + center.longitude + "&zoom=17&size=1865x1512&maptype=" + maptype;
-
-                        msg.reply(smap);
-                    } else {
-                        cmd = "Whoops! CRAB street object source has undefined coordinates!" + JSON.stringify(error);
-                        msg.reply(cmd);
-                    }
-                } else {
-                    cmd = "Whoops! Houston, we have a problem: " + JSON.stringify(error);
-                    msg.reply(cmd);
-                }
-            });
-            return false;
-        }
+        msg.reply(reply);
+        //url = "http://grbtiles.byteless.net/streets/?limit=10&postcode=" + msg.match[1] + "&meta=map";
     });
 
     robot.respond("/streetmap ([0-9]+)(?: (.*))?$/i", function(msg) {
