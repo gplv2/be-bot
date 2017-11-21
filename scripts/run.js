@@ -1,5 +1,5 @@
 // Commands:
-// hubot active [now|today] - shows the active 10 mappers of the moment or by total of the day
+// hubot hotshots [now|today] - shows the active 10 mappers of the moment or by total of the day
 // hubot streets <postcode> [partialstring] - searches for streetlist in postcode
 // hubot streetmap <postcode> [partialstring] [cycle|mapnik] - creates a static image given by the bounds of the street we search
 // hubot stats <postcode> - Shows you a count for the number of streets in that postcode
@@ -75,7 +75,7 @@ module.exports = function(robot) {
         }
     });
 
-    robot.respond("/active(?: (.*))?$/i", function(msg) {
+    robot.respond("/hotshots(?: (.*))?$/i", function(msg) {
 
         function parseOutput(changes_json) {
             console.log("processing retrieval ...");
@@ -83,15 +83,10 @@ module.exports = function(robot) {
 
             if(typeof changes_json == 'object' && changes_json !== null) {
                 console.log("IF object");
-                //console.error(changes_json, null);
-                //process.exit(1);
 
                 var uarray = {};
                 // var sodasHad = robot.brain.get('totalSodas') * 1 || 0;
                 Object.keys(changes_json).forEach(function(key, idx) {
-                    //console.log(key);
-                    // console.log("OK ROW");
-                    //console.error(changes_json[key], null);
                     //console.log(changes_json[key]['$']['uid']);
                     var uid = changes_json[key]['$']['uid'];
                     var cs_id = changes_json[key]['$']['id'];
@@ -110,85 +105,46 @@ module.exports = function(robot) {
                         uarray[uid]['counter']++;
                         uarray[uid]['changesets'].push(cs_id);
                     }
-
-                    //console.error(changes_json[key], null);
-                    //process.exit(1);
-                    // console.log(key + ": " + idx);
-                    /*
-                     *   '6781225': 
-                     *      { counter: 3,
-                     *        changesets: [ '53957855', '53957617', '53957033' ],
-                     *        profile: 
-                     *        { id: '53957855',
-                        *        user: 'Juvan',
-                        *        uid: '6781225',
-                        *       created_at: '2017-11-20T19:03:45Z',
-                        *      closed_at: '2017-11-20T19:03:45Z',
-                        *     open: 'false',
-                     *    min_lat: '50.7067433',
-                     *   min_lon: '5.6036214',
-                     *  max_lat: '50.7186163',
-                     *                                                                                              max_lon: '5.6211756',
-                     *                                                                                                      comments_count: '0' } },
-                     *
-                     */
                 });
 
-                // Extend object to support sort method
-                function sortObj(obj) {
-                    "use strict";
-
-                    function Obj2Array(obj) {
-                        var newObj = [];
-                        for (var key in obj) {
-                            if (!obj.hasOwnProperty(key)) return;
-                            var value = [key, obj[key]];
-                            newObj.push(value);
-                        }
-                        return newObj;
-                    }
-
-                    var sortedArray = Obj2Array(obj).sort(function(a, b) {
-                        if (a[1] < b[1]) return -1;
-                        if (a[1] > b[1]) return 1;
-                        return 0;
-                    });
-
-                    function recreateSortedObject(targ) {
-                        var sortedObj = {};
-                        for (var i = 0; i < targ.length; i++) {
-                            sortedObj[targ[i][0]] = targ[i][1];
-                        }
-                        return sortedObj;
-                    }
-                    return recreateSortedObject(sortedArray);
-                }
-
-                var sortedObj = sortObj(uarray);
-
-                Object.invert = function (obj) {
-
-                    var new_obj = {};
-
-                    for (var prop in obj) {
-                        if(obj.hasOwnProperty(prop)) {
-                            new_obj[obj[prop]] = prop;
-                        }
-                    }
-
-                    return new_obj;
-                };
-                // var invertedList = Object.invert(uarray);
-
-
-                var reply="";
+                var arrObj = [];
                 Object.keys(uarray).forEach(function(key, idx) {
-                    var uid = uarray[key]['profile']['uid'];
-                    var name = uarray[key]['profile']['user'];
-                    var counts = uarray[key]['counter'];
-                    var sets = uarray[key]['changsets'];
+                    arrObj.push(uarray[key]);
+                });
 
-                    reply=reply + "User: " + name + " # changesets: " + counts +'\n';
+                //console.dir(arrObj, null);
+
+                // use slice() to copy the array and not just make a reference
+                var byTotal = arrObj.slice(0);
+                byTotal.sort(function(a,b) {
+                    return b.counter - a.counter;
+                });
+
+                console.log('by total:');
+                console.dir(byTotal);
+
+                var sortedObj = byTotal.reduce(function(acc, cur, i) {
+                      acc[i] = cur;
+                      return acc;
+                }, {});
+
+                console.log('sortedObj:');
+                //console.dir(sortedObj, null);
+
+                var reply="\n";
+                Object.keys(sortedObj).forEach(function(key, idx) {
+                    var uid = sortedObj[key]['profile']['uid'];
+                    var name = sortedObj[key]['profile']['user'];
+                    var counts = sortedObj[key]['counter'];
+                    var sets = sortedObj[key]['changesets'];
+
+                    var closed = sortedObj[key]['profile']['closed_at'];
+	            var newDate = new Date(closed);
+
+                    //console.log(sortedObj[key]);
+                    //process.exit(1);
+
+                    reply=reply + newDate.toUTCString() + " :  User: " + name + " # changesets: " + counts + " ( " +sets.toString()+" ) " + '\n';
                 });
                 msg.reply(reply); 
             } else {
