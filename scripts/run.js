@@ -91,17 +91,17 @@ module.exports = function(robot) {
          case 'xivk':
             reply="Indian name : Dances with OSM: Chief OSMBE,  Mapper name: The Boss Router";
             break;
+         case 'bebot':
+            reply="(that's me !!) Indian name : Lord of the Rooms,  Mapper name: He-who-doesnt-map-at-all,  I like to sleep here: https://github.com/gplv2/be-bot";
+            break;
          default:
             reply="Sorry, " + name + " is way too cool to comment on!";
       }
 
-      //if(users.length >= 1) {
-         //var user = users[0]
-         // Do something interesting here.. 
          msg.reply(reply);
    });
 
-    robot.respond("/lost$/i", function(msg) {
+   robot.respond("/lost$/i", function(msg) {
    msg.send("You can go to <https://www.google.com|google> and search.");
     });
 
