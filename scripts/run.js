@@ -129,7 +129,8 @@ module.exports = function(robot) {
                 reply=reply+"\nGRB data merge is pending the completion of the toolsets and the import case we are setting up.\n";
                 break;
             case 'belgium':
-                reply="https://wiki.openstreetmap.org/wiki/WikiProject_Belgium";
+                reply="\nhttps://wiki.openstreetmap.org/wiki/WikiProject_Belgium\n";
+                reply="Belgian bounding box is: 2.52, 50.64, 5.94, 51.51";
                 break;
             default:
                 reply="Sorry, I don't know anything decent to say about " + name + ". ";
