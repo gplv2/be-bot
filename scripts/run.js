@@ -131,6 +131,8 @@ module.exports = function(robot) {
             case 'belgium':
                 reply="\nhttps://wiki.openstreetmap.org/wiki/WikiProject_Belgium\n";
                 reply="Belgian bounding box is: 2.52, 50.64, 5.94, 51.51";
+                reply="\nOur talk-be mailing list is here:\n";
+                reply="https://lists.openstreetmap.org/listinfo/talk-be";
                 break;
             default:
                 reply="Sorry, I don't know anything decent to say about " + name + ". ";
