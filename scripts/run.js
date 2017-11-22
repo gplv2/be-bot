@@ -1,5 +1,6 @@
 // Commands:
 // hubot hotshots - shows the active mappers of the moment with number of changesets (about 1 to 2 days data)
+// hubot events - shows the meetup event page link and (hardcoded) upcoming events (API implementation pending)
 // hubot changeset <number> - shows links on the changeset to analyse it ( ahavi, osmhv, osm , ...)
 // hubot streets <postcode> [partialstring] - searches for streetlist in postcode
 // hubot streetmap <postcode> [partialstring] [cycle|mapnik] - creates a static image given by the bounds of the street we search
@@ -8,7 +9,7 @@
 // hubot who is <username/name/osmname> - I will tell you what I know about this person with twist
 // hubot what is crab|grb - When you want to know about crab/grb and receive some links
 
-// author Glenn Plas for OSM.BE
+// made by Glenn Plas for OSM.BE
 
 // var slackBot = require('slack-bot')('https://hooks.slack.com/services/TT0ANGLKK8/TB0ANVAUH3/SAMsIzvHkcwyzbVEIf6B2aey');
 // var sdk = require("matrix-js-sdk");
@@ -30,9 +31,9 @@ var Memcached = require('memcached');
 var memcached = new Memcached('127.0.0.1:11211');
 
 function pad(n, width, z) {
-  z = z || '0';
-  n = n + '';
-  return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
+    z = z || '0';
+    n = n + '';
+    return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
 }
 
 String.prototype.lpad = function(padString, length) {
@@ -44,98 +45,112 @@ String.prototype.lpad = function(padString, length) {
 
 
 function getcache() {
-   return mpromise = new Promise(function(resolve, reject) {
-      memcached.get( "changesets", function( err, result ){
-         if(err) {
-            console.log( err );
-            reject(Error(err)); 
-         } else {
-             if(typeof result =='object' && result) {
-                 //console.log(result);
-                 console.log("Loading data from cache");
-                 //msg.send('Loaded changeset data from memcache');
-                 resolve(result);
-                 //} else {
-                 //reject(Error('No hit')); 
-             } else {
-                 reject(Error(err));
-             }
-             //msg.reply("OK");
-         }
-      });
-   });
+    return mpromise = new Promise(function(resolve, reject) {
+        memcached.get( "changesets", function( err, result ){
+            if(err) {
+                console.log( err );
+                reject(Error(err)); 
+            } else {
+                if(typeof result =='object' && result) {
+                    //console.log(result);
+                    console.log("Loading data from cache");
+                    //msg.send('Loaded changeset data from memcache');
+                    resolve(result);
+                    //} else {
+                    //reject(Error('No hit')); 
+                } else {
+                    reject(Error(err));
+                }
+                //msg.reply("OK");
+            }
+        });
+    });
 }
 
 //process.exit(1);
 
 module.exports = function(robot) {
-   //console.log(robot);
-   robot.respond(/who is @?([\w .\-]+)\?*$/i, function(msg) {
-      name = msg.match[1].trim();
-      //users = robot.brain.usersForFuzzyName(name);
-      var reply="";
-      switch(name) {
-         case 'escada':
-            reply="Indian name : He who walks with dogs: The Dogwalker, Mapper name: MicroMapper Inc.";
-            break;
-         case 'glenn':
-            reply="Indian name : Overpass boy: The Overpasswhisperer, Mapper name: Tha Validator.";
-            break;
-         case 'joost':
-            reply="Indian name : The OSM planner:  BoardRunner, Mapper name: JOSM what/who?";
-            break;
-         case 'lodde1949':
-            reply="Indian name : He who maps 24/7: The Mapinator, Mapper name: The-mapper-that-never-sleeps";
-            break;
-         case 'jonathan':
-            reply="Indian name : A rising osm.Be-Star: Legoboy,  Mapper name: The tiler. https://github.com/jbelien";
-            break;
-         case 'xivk':
-            reply="Indian name : Dances with OSM: Chief OSMBE,  Mapper name: The Boss Router. https://github.com/xivk";
-            break;
-         case 'bebot':
-            reply="(that's me !!) Indian name : Lord of the Rooms,  Mapper name: He-who-doesnt-map-at-all,  I like to sleep here: https://github.com/gplv2/be-bot";
-            break;
-         default:
-            reply="Sorry, " + name + " is way too cool to comment on!";
-      }
+    //console.log(robot);
+    robot.respond(/who is @?([\w .\-]+)\?*$/i, function(msg) {
+        name = msg.match[1].trim();
+        //users = robot.brain.usersForFuzzyName(name);
+        var reply="";
+        switch(name) {
+            case 'escada':
+                reply="Indian name : He who walks with dogs: The Dogwalker, Mapper name: MicroMapper Inc.";
+                break;
+            case 'glenn':
+                reply="Indian name : Overpass boy: The Overpasswhisperer, Mapper name: Tha Validator.";
+                break;
+            case 'joost':
+                reply="Indian name : The OSM planner:  BoardRunner, Mapper name: JOSM what/who?";
+                break;
+            case 'lodde1949':
+                reply="Indian name : He who maps 24/7: The Mapinator, Mapper name: The-mapper-that-never-sleeps";
+                break;
+            case 'jonathan':
+                reply="Indian name : A rising osm.Be-Star: Legoboy,  Mapper name: The tiler. https://github.com/jbelien";
+                break;
+            case 'xivk':
+                reply="Indian name : Dances with OSM: Chief OSMBE,  Mapper name: The Boss Router. https://github.com/xivk";
+                break;
+            case 'bebot':
+                reply="(that's me !!) Indian name : Lord of the Rooms,  Mapper name: He-who-doesnt-map-at-all,  I like to sleep here: https://github.com/gplv2/be-bot";
+                break;
+            case 'giphy':
+                reply="Giphy is that 'other bot', communicates solely with moving pics, a bit like transformers' bumblebee only speaks with recorded sounds.  he's a simple bot, I'm complex!";
+                break;
+            default:
+                reply="Sorry, " + name + " is way too cool to comment on!";
+        }
 
-         msg.reply(reply);
-   });
+        msg.reply(reply);
+    });
 
-   robot.respond(/what is @?([\w .\-]+)\?*$/i, function(msg) {
-      name = msg.match[1].trim().toLowerCase();
-      //users = robot.brain.usersForFuzzyName(name);
-      var reply="";
-      switch(name) {
-         case 'crab':
-            reply=reply+"\nCentraal Referentieadressenbestand (CRAB)\n";
-            reply=reply+"https://overheid.vlaanderen.be/producten-diensten/centraal-referentieadressenbestand-crab";
-            reply=reply+"\nOSM information on importing crab:\n";
-            reply=reply+"https://wiki.openstreetmap.org/wiki/AGIV_CRAB_Import";
-            reply=reply+"https://wiki.openstreetmap.org/wiki/WikiProject_Belgium/Using_AGIV_Crab_data\n";
-            reply=reply+"http://crab-import.osm.be";
-            reply=reply+"\nCRAB data can be merged into OSM using the specific tool.  Please read the wiki first, then the instructions second.\n";
-            break;
-         case 'grb':
-            reply=reply+"\nGrootschalig ReferentieBestand (GRB)\n";
-            reply=reply+"https://overheid.vlaanderen.be/producten-diensten/basiskaart-vlaanderen-grb";
-            reply=reply+"https://wiki.openstreetmap.org/wiki/WikiProject_Belgium/GRB";
-            reply=reply+"https://wiki.openstreetmap.org/wiki/GRBimport";
-            reply=reply+"\nGRB data merge is pending the completion of the toolsets and the import case we are setting up.\n";
-            break;
-         case 'belgium':
-            reply="https://wiki.openstreetmap.org/wiki/WikiProject_Belgium";
-            break;
-         default:
-            reply="Sorry, I don't know anything decent to say about " + name + ". ";
-      }
+    robot.respond(/what is @?([\w .\-]+)\?*$/i, function(msg) {
+        name = msg.match[1].trim().toLowerCase();
+        //users = robot.brain.usersForFuzzyName(name);
+        var reply="";
+        switch(name) {
+            case 'crab':
+                reply=reply+"\nCentraal Referentieadressenbestand (CRAB)\n";
+                reply=reply+"https://overheid.vlaanderen.be/producten-diensten/centraal-referentieadressenbestand-crab";
+                reply=reply+"\nOSM information on importing crab:\n";
+                reply=reply+"https://wiki.openstreetmap.org/wiki/AGIV_CRAB_Import";
+                reply=reply+"\nhttps://wiki.openstreetmap.org/wiki/WikiProject_Belgium/Using_AGIV_Crab_data";
+                reply=reply+"\nhttp://crab-import.osm.be";
+                reply=reply+"\nCRAB data can be merged into OSM using the specific tool.  Please read the wiki first, then the instructions second.\n";
+                break;
+            case 'grb':
+                reply=reply+"\nGrootschalig ReferentieBestand (GRB)\n";
+                reply=reply+"\nhttps://overheid.vlaanderen.be/producten-diensten/basiskaart-vlaanderen-grb";
+                reply=reply+"\nhttps://wiki.openstreetmap.org/wiki/WikiProject_Belgium/GRB";
+                reply=reply+"\nhttps://wiki.openstreetmap.org/wiki/GRBimport";
+                reply=reply+"\nGRB data merge is pending the completion of the toolsets and the import case we are setting up.\n";
+                break;
+            case 'belgium':
+                reply="https://wiki.openstreetmap.org/wiki/WikiProject_Belgium";
+                break;
+            default:
+                reply="Sorry, I don't know anything decent to say about " + name + ". ";
+        }
 
-         msg.reply(reply);
-   });
+        msg.reply(reply);
+    });
 
-   robot.respond("/lost$/i", function(msg) {
-   msg.send("You can go to <https://www.google.com|google> and search.");
+    robot.respond(/events$/i, function(msg) {
+        msg.send("Any OSM.BE events can be found here: ");
+        console.log("Any OSM.BE events can be found here: ");
+        var reply="https://www.meetup.com/en-AU/OpenStreetMap-Belgium/";
+        reply=reply+ "\nUpcoming events this month:\n";
+        reply=reply+ "\https://www.meetup.com/en-AU/OpenStreetMap-Belgium/events/244260988/\n";
+        reply=reply+ "\https://www.eventbrite.com/e/missing-maps-msfhi-brussels-tickets-38886715212";
+
+        msg.reply(reply);
+    });
+
+    robot.respond("/lost$/i", function(msg) {
+        msg.send("You can go to <https://www.google.com|google> and search.");
     });
 
     robot.respond("/hotshots(?: (.*))?$/i", function(msg) {
@@ -187,8 +202,8 @@ module.exports = function(robot) {
                 console.dir(byTotal);
 
                 var sortedObj = byTotal.reduce(function(acc, cur, i) {
-                      acc[i] = cur;
-                      return acc;
+                    acc[i] = cur;
+                    return acc;
                 }, {});
 
                 console.log('sortedObj:');
@@ -197,38 +212,38 @@ module.exports = function(robot) {
                 var base = "http://www.openstreetmap.org/changeset/";
                 var reply="Recent belgian mappers: \n";
                 Object.keys(sortedObj).forEach(function(key, idx) {
-                   var uid = sortedObj[key]['profile']['uid'];
-                   var name = sortedObj[key]['profile']['user'];
-                   var counts = sortedObj[key]['counter'].toString();
-                   var sets = sortedObj[key]['changesets'];
+                    var uid = sortedObj[key]['profile']['uid'];
+                    var name = sortedObj[key]['profile']['user'];
+                    var counts = sortedObj[key]['counter'].toString();
+                    var sets = sortedObj[key]['changesets'];
 
-                   var closed = sortedObj[key]['profile']['closed_at'];
-                   var newDate = new Date(closed);
-                   var urls = [];
+                    var closed = sortedObj[key]['profile']['closed_at'];
+                    var newDate = new Date(closed);
+                    var urls = [];
 
-                   for (var i = 0; i < sets.length; i++) {
-                      //urls.push(base + sets[i]);
-                      urls.push(sets[i]);
-                   }
+                    for (var i = 0; i < sets.length; i++) {
+                        //urls.push(base + sets[i]);
+                        urls.push(sets[i]);
+                    }
 
-                   var allurls= urls.join(' ');
+                    var allurls= urls.join(' ');
 
-                   //console.log(sortedObj[key]);
-                   //process.exit(1);
+                    //console.log(sortedObj[key]);
+                    //process.exit(1);
 
-                   reply=reply //+ newDate.toGMTDateString() 
-                      + " # changesets: " + counts.lpad(" ", 2) 
-                      + " :  User: " + name 
-                      + " ( " +allurls+" ) " + '\n';
+                    reply=reply //+ newDate.toGMTDateString() 
+                        + " # changesets: " + counts.lpad(" ", 2) 
+                        + " :  User: " + name 
+                        + " ( " +allurls+" ) " + '\n';
                 });
-               msg.reply(reply); 
+                msg.reply(reply); 
             } else {
-               console.log("NO JSON HERE");
+                console.log("NO JSON HERE");
             }
-           console.log("END");
+            console.log("END");
         }
 
-       // Get Belgian changesets
+        // Get Belgian changesets
         var url = "http://api.openstreetmap.org/api/0.6/changesets?bbox=2.52,50.64,5.94,51.51";
 
         var options = {
@@ -245,15 +260,15 @@ module.exports = function(robot) {
         };
 
         getcache().then(function(response) {
-        if (response) {
+            if (response) {
                 console.log("Cache hit");
                 parseOutput(response);
-        } else{
+            } else{
                 console.log("Weird stuff shit");
-        }
+            }
         }).catch(function (error) {
             console.log("Cache miss");
-        msg.send("Changeset list not cached, contacting OSM API...");
+            msg.send("Changeset list not cached, contacting OSM API...");
             rp(options).then(function (repos) {
                 console.log('%d long response', repos.length);
                 //var client = sdk.createClient("https://matrix.org");
@@ -295,8 +310,8 @@ module.exports = function(robot) {
         osm_url = "http://www.openstreetmap.org/browse/changeset/" + set;
 
         var reply = "\nChangeset OSM: " + osm_url + "\n"
-                    + "Achavi diff  : " + achav_url + "\n"
-                    + "osmhv_url    : " + osmhv_url + "\n";
+            + "Achavi diff  : " + achav_url + "\n"
+            + "osmhv_url    : " + osmhv_url + "\n";
 
         msg.reply(reply);
         //url = "http://grbtiles.byteless.net/streets/?limit=10&postcode=" + msg.match[1] + "&meta=map";
