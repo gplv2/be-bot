@@ -142,10 +142,12 @@ module.exports = function(robot) {
     robot.respond(/events$/i, function(msg) {
         msg.send("Any OSM.BE events can be found here: ");
         console.log("Any OSM.BE events can be found here: ");
-        var reply="https://www.meetup.com/en-AU/OpenStreetMap-Belgium/";
+        var reply="https://www.meetup.com/OpenStreetMap-Belgium/";
         reply=reply+ "\nUpcoming events this month:\n";
-        reply=reply+ "\https://www.meetup.com/en-AU/OpenStreetMap-Belgium/events/244260988/\n";
-        reply=reply+ "\https://www.eventbrite.com/e/missing-maps-msfhi-brussels-tickets-38886715212";
+        reply=reply+ "\hhttps://www.meetup.com/en-AU/OpenStreetMap-Belgium/events/244260988/\n";
+        reply=reply+ "\hhttps://www.eventbrite.com/e/missing-maps-msfhi-brussels-tickets-38886715212\n";
+        reply=reply+ "\nUpcoming events next month:\n";
+        reply=reply+ "\hhttps://www.meetup.com/OpenStreetMap-Belgium/events/245291588/\n";
 
         msg.reply(reply);
     });
@@ -311,8 +313,8 @@ module.exports = function(robot) {
         osm_url = "http://www.openstreetmap.org/browse/changeset/" + set;
 
         var reply = "\nChangeset OSM: " + osm_url + "\n"
-            + "Achavi diff  : " + achav_url + "\n"
-            + "osmhv_url    : " + osmhv_url + "\n";
+            + "Achavi diff   : " + achav_url + "\n"
+            + "OSM Hist view : " + osmhv_url + "\n";
 
         msg.reply(reply);
         //url = "http://grbtiles.byteless.net/streets/?limit=10&postcode=" + msg.match[1] + "&meta=map";
