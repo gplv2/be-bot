@@ -1,14 +1,16 @@
 // Commands:
-// hubot hotshots [now|today] - shows the active 10 mappers of the moment or by total of the day
+// hubot hotshots - shows the active mappers of the moment with number of changesets (about 1 to 2 days data)
+// hubot changeset <number> - shows links on the changeset to analyse it ( ahavi, osmhv, osm , ...)
 // hubot streets <postcode> [partialstring] - searches for streetlist in postcode
 // hubot streetmap <postcode> [partialstring] [cycle|mapnik] - creates a static image given by the bounds of the street we search
-// hubot stats <postcode> - Shows you a count for the number of streets in that postcode
-// hubot changeset <number> - Blame someone
-//
+// hubot stats <postcode> - Shows you a count for the number of streets in that postal code
+// hubot lost - When you are lost and want to find the way
+// hubot who is <username/name/osmname> - I will tell you what I know about this person with twist
+// hubot what is crab|grb - When you want to know about crab/grb and receive some links
+
 // author Glenn Plas for OSM.BE
 
-
-//var slackBot = require('slack-bot')('https://hooks.slack.com/services/TT0ANGLKK8/TB0ANVAUH3/SAMsIzvHkcwyzbVEIf6B2aey');
+// var slackBot = require('slack-bot')('https://hooks.slack.com/services/TT0ANGLKK8/TB0ANVAUH3/SAMsIzvHkcwyzbVEIf6B2aey');
 // var sdk = require("matrix-js-sdk");
 // var client = sdk.createClient("https://matrix.org");
 //
@@ -86,16 +88,47 @@ module.exports = function(robot) {
             reply="Indian name : He who maps 24/7: The Mapinator, Mapper name: The-mapper-that-never-sleeps";
             break;
          case 'jonathan':
-            reply="Indian name : A rising osm.Be-Star: Legoboy,  Mapper name: The tiler";
+            reply="Indian name : A rising osm.Be-Star: Legoboy,  Mapper name: The tiler. https://github.com/jbelien";
             break;
          case 'xivk':
-            reply="Indian name : Dances with OSM: Chief OSMBE,  Mapper name: The Boss Router";
+            reply="Indian name : Dances with OSM: Chief OSMBE,  Mapper name: The Boss Router. https://github.com/xivk";
             break;
          case 'bebot':
             reply="(that's me !!) Indian name : Lord of the Rooms,  Mapper name: He-who-doesnt-map-at-all,  I like to sleep here: https://github.com/gplv2/be-bot";
             break;
          default:
             reply="Sorry, " + name + " is way too cool to comment on!";
+      }
+
+         msg.reply(reply);
+   });
+
+   robot.respond(/what is @?([\w .\-]+)\?*$/i, function(msg) {
+      name = msg.match[1].trim().toLowerCase();
+      //users = robot.brain.usersForFuzzyName(name);
+      var reply="";
+      switch(name) {
+         case 'crab':
+            reply=reply+"\nCentraal Referentieadressenbestand (CRAB)\n";
+            reply=reply+"https://overheid.vlaanderen.be/producten-diensten/centraal-referentieadressenbestand-crab";
+            reply=reply+"\nOSM information on importing crab:\n";
+            reply=reply+"https://wiki.openstreetmap.org/wiki/AGIV_CRAB_Import";
+            reply=reply+"https://wiki.openstreetmap.org/wiki/WikiProject_Belgium/Using_AGIV_Crab_data\n";
+            reply=reply+"http://crab-import.osm.be";
+            reply=reply+"\nCRAB data can be merged into OSM using the specific tool.  Please read the wiki first, then the instructions second.\n";
+            break;
+         case 'grb':
+            reply=reply+"\nGrootschalig ReferentieBestand (GRB)\n";
+            reply=reply+"https://overheid.vlaanderen.be/producten-diensten/basiskaart-vlaanderen-grb";
+            reply=reply+"https://wiki.openstreetmap.org/wiki/WikiProject_Belgium/GRB";
+            reply=reply+"https://wiki.openstreetmap.org/wiki/GRBimport";
+            reply=reply+"\nGRB data merge is pending the completion of the toolsets and the import case we are setting up.\n";
+            break;
+         case 'belgium':
+            reply="https://wiki.openstreetmap.org/wiki/WikiProject_Belgium";
+            break;
+         default:
+            reply="Sorry, I don't know anything decent to say about " + name + ". ";
       }
 
          msg.reply(reply);
