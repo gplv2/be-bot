@@ -3,3 +3,4 @@ node_modules
 .hubot_history
 st.sh
 nohup.out
+api_key.txt
