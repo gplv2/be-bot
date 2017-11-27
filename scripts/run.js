@@ -1,20 +1,38 @@
 // Commands:
-// hubot hotshots - shows the active mappers of the moment with number of changesets (about 1 to 2 days data)
+// hubot (changes|hotshots)|motd - shows the active mappers of the moment with number of changesets (about 1 to 2 days data) - motd : mapper of the day, hands you the top 3
 // hubot events - shows the meetup event page link and (hardcoded) upcoming events (API implementation pending)
 // hubot changeset <number> - shows links on the changeset to analyse it ( ahavi, osmhv, osm , ...)
 // hubot streets <postcode> [partialstring] - searches for streetlist in postcode
 // hubot streetmap <postcode> [partialstring] [cycle|mapnik] - creates a static image given by the bounds of the street we search
 // hubot stats <postcode> - Shows you a count for the number of streets in that postal code
-// hubot lost - When you are lost and want to find the way
 // hubot who is <username/name/osmname> - I will tell you what I know about this person with twist
 // hubot what is crab|grb - When you want to know about crab/grb and receive some links
-
-// made by Glenn Plas for OSM.BE
+// hubot wtf <search term> - search for <search term> via DuckDuckGo Instant Search
+// hubot duck me <search term> - search for <search term> via DuckDuckGo Instant Search
+//
+// Author:
+// Glenn Plas for OSM.BE
 
 // var slackBot = require('slack-bot')('https://hooks.slack.com/services/TT0ANGLKK8/TB0ANVAUH3/SAMsIzvHkcwyzbVEIf6B2aey');
 // var sdk = require("matrix-js-sdk");
 // var client = sdk.createClient("https://matrix.org");
 //
+//
+// hubot lost - When you are lost and want to find the way
+
+var config, parseConfig;
+
+parseConfig = require('hubot-config');
+
+config = parseConfig('hello', {
+    message: 'world',
+    friendlyMessage: null
+});
+
+
+//console.log(parseConfig);
+//process.exit(1);
+
 var request = require('request');
 var rp = require('request-promise');
 
@@ -68,9 +86,57 @@ function getcache() {
 }
 
 //process.exit(1);
+//
+
 
 module.exports = function(robot) {
     //console.log(robot);
+    robot.respond(/(wtf|duck me) (.*)/i, function(msg) {
+
+        var getDefinition = function(msg, query) {
+            return msg.http("http://api.duckduckgo.com/?q=" + query + "&format=json&t=hubotscript").get()(function(err, res, body) {
+                var i, len, r, ref, response, results;
+                //console.log(body);
+                results = JSON.parse(body);
+                switch (results.Type) {
+                    case "D":
+                        response = "That could mean a few things...\n";
+                        ref = results.RelatedTopics;
+                        for (i = 0, len = ref.length; i < len; i++) {
+                            r = ref[i];
+                            if (r.Result) {
+                                response += r.Text + " " + r.FirstURL + "\n";
+                            }
+                        }
+                        break;
+                    case "C":
+                        response = "That's a pretty broad topic. Try this website " + results.AbstractURL;
+                        break;
+                    case "A":
+                        response = results.Image + "\n";
+                        response += results.AbstractText + "\n";
+                        response += "More: " + results.AbstractURL + "\n";
+                        response += "[taken from " + results.AbstractSource + " via DuckDuckGo API]";
+                        break;
+                    default:
+                        response = "Sorry. I have no idea what you mean. Try Uncle Google (http://www.google.com/#q=" + query + ")";
+                }
+                msg.send(response);
+            });
+        };
+
+        msg.reply(getDefinition(msg, msg.match[2]));
+    });
+
+    robot.respond(/hello/, function(msg) {
+        console.log("hello");
+        msg.reply(config.message);
+    });
+    robot.respond(/hi/, function(msg) {
+        console.log("ho");
+        msg.reply(config.friendlyMessage);
+    });
+
     robot.respond(/who is @?([\w .\-]+)\?*$/i, function(msg) {
         name = msg.match[1].trim();
         //users = robot.brain.usersForFuzzyName(name);
@@ -142,6 +208,9 @@ module.exports = function(robot) {
     });
 
     robot.respond(/events$/i, function(msg) {
+
+        // https://api.meetup.com/OpenStreetMap-Belgium/events?photo-host=public&page=20&sig_id=199962231&sig=da6b0102e756516d98c72c3fe34712061c425ee9
+
         msg.send("Any OSM.BE events can be found here: ");
         console.log("Any OSM.BE events can be found here: ");
         var reply="https://www.meetup.com/OpenStreetMap-Belgium/";
@@ -155,12 +224,12 @@ module.exports = function(robot) {
     });
 
     robot.respond("/lost$/i", function(msg) {
-        msg.send("You can go to <https://www.google.com|google> and search.");
+        msg.reply("You can go to <https://www.google.com|google> and search.");
     });
 
-    robot.respond("/hotshots(?: (.*))?$/i", function(msg) {
+    robot.respond("/(changes|hotshots|motd)(?: (.*))?$/i", function(msg) {
 
-        function parseOutput(changes_json) {
+        function parseOutput(changes_json,msg) {
             console.log("processing retrieval ...");
             //console.dir(changes_json);
 
@@ -213,9 +282,17 @@ module.exports = function(robot) {
 
                 console.log('sortedObj:');
                 //console.dir(sortedObj, null);
+                // console.log(msg);
+                mycmd = msg.match[1].trim();
 
                 var base = "http://www.openstreetmap.org/changeset/";
-                var reply="Recent belgian mappers: \n";
+                var reply = "";
+                if (mycmd == 'motd') {
+                    reply="Top 3 Mappers Of The Day are: \n";
+                } else {
+                    reply="Top mappers of last 24hrs sorted by # changsets: \n";
+                }
+
                 Object.keys(sortedObj).forEach(function(key, idx) {
                     var uid = sortedObj[key]['profile']['uid'];
                     var name = sortedObj[key]['profile']['user'];
@@ -236,12 +313,23 @@ module.exports = function(robot) {
                     //console.log(sortedObj[key]);
                     //process.exit(1);
 
-                    reply=reply //+ newDate.toGMTDateString() 
-                        + " # changesets: " + counts.lpad(" ", 2) 
-                        + " :  User: " + name 
-                        + " ( " +allurls+" ) " + '\n';
+                    if (mycmd == 'motd') {
+                        if (idx<3) {
+                            reply=reply //+ newDate.toGMTDateString() 
+                                + " # changesets: " + counts.lpad(" ", 2) 
+                                + " :  User: " + name 
+                                + " ( " +allurls+" ) " + '\n';
+                        }
+                    }  else {
+                        reply=reply //+ newDate.toGMTDateString() 
+                            + " # changesets: " + counts.lpad(" ", 2) 
+                            + " :  User: " + name 
+                            + " ( " +allurls+" ) " + '\n';
+                    }
+
                 });
                 msg.reply(reply); 
+                msg.send("This list is no indication of quality. It's meant to be used along with `changeset` bot command to review changesets"); 
             } else {
                 console.log("NO JSON HERE");
             }
@@ -267,7 +355,7 @@ module.exports = function(robot) {
         getcache().then(function(response) {
             if (response) {
                 console.log("Cache hit");
-                parseOutput(response);
+                parseOutput(response,msg);
             } else{
                 console.log("Weird stuff shit");
             }
@@ -287,7 +375,7 @@ module.exports = function(robot) {
                             console.log("Stored in cache");
                         }
                     });
-                    parseOutput(mresult['osm']['changeset']);
+                    parseOutput(mresult['osm']['changeset'],msg);
                     console.log("Done parsing string");
                 });
             }).catch(function (error) {
