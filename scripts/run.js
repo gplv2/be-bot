@@ -207,20 +207,86 @@ module.exports = function(robot) {
         msg.reply(reply);
     });
 
-    robot.respond(/events$/i, function(msg) {
+    robot.respond(/(events|calendar)$/i, function(msg) {
+        var reply="";
 
-        // https://api.meetup.com/OpenStreetMap-Belgium/events?photo-host=public&page=20&sig_id=199962231&sig=da6b0102e756516d98c72c3fe34712061c425ee9
+        function parseEventOutput(calendar_json,msg) {
+            console.log("processing retrieval ...");
+            //console.dir(calendar_json);
 
-        msg.send("Any OSM.BE events can be found here: ");
-        console.log("Any OSM.BE events can be found here: ");
-        var reply="https://www.meetup.com/OpenStreetMap-Belgium/";
-        reply=reply+ "\nUpcoming events this month:\n";
-        reply=reply+ "\hhttps://www.meetup.com/en-AU/OpenStreetMap-Belgium/events/244260988/\n";
-        reply=reply+ "\hhttps://www.eventbrite.com/e/missing-maps-msfhi-brussels-tickets-38886715212\n";
-        reply=reply+ "\nUpcoming events next month:\n";
-        reply=reply+ "\hhttps://www.meetup.com/OpenStreetMap-Belgium/events/245291588/\n";
+            if(typeof calendar_json == 'object' && calendar_json !== null) {
+                console.log("Is object");
 
-        msg.reply(reply);
+                var uarray = {};
+                // var sodasHad = robot.brain.get('totalSodas') * 1 || 0;
+
+                Object.keys(calendar_json).forEach(function(key, idx) {
+                    // console.dir(calendar_json[key], { depth: null });
+                    //var title = title: [ { _: 'Missing Maps Mapathon at IPIS', '$': { type: 'html' } } ]
+                    var title = calendar_json[key]['title'][0]['_'];
+                    /*
+                     *
+                     *   published: [ '2017-12-06T00:00:00+00:00' ],
+                     *     updated: [ '2017-12-06T00:00:00+00:00' ],
+                     *       id: [ 'http://maptime.io/belgium/event/2017/12/06/missing-maps-mapathon-ipis' ]
+                     */
+
+
+                    var event_date = calendar_json[key]['published'][0];
+                    var id = calendar_json[key]['id'][0];
+
+                    //var newDate = new Date(event_date);
+
+                    //process.exit(1);
+                    reply=reply //+ newDate.toGMTDateString() 
+                        + title
+                        + " :  date: " + event_date
+                        + " ( " +id+" ) " + '\n';
+
+                });
+                msg.reply(reply); 
+                // msg.send("This list is no indication of quality. It's meant to be used along with `changeset` bot command to review changesets"); 
+            } else {
+                console.log("NO JSON HERE");
+            }
+            console.log("END");
+        }
+
+        // Get Belgian Calendar
+        var url = "http://maptime.io/belgium/feed.xml";
+
+        var options = {
+            uri: url,
+            /*
+            qs: {
+                access_token: '12434asfdsdfw3' // -> uri + '?access_token=xxxxx%20xxxxx'
+            },
+            */
+            headers: {
+                'User-Agent': 'Request-Promise [memcached] - BEBOT osmbe bot https://riot.im/app/?#/room/#osmbe:matrix.org'
+            },
+            json: false // if true: Automatically parses the JSON string in the response
+        };
+
+        rp(options).then(function (repos) {
+            console.log('%d length response', repos.length);
+            parseString(repos, function (err, mresult) {
+                console.log("Parsing results");
+                //console.dir(mresult, { depth: null });
+                parseEventOutput(mresult['feed']['entry'],msg);
+                //console.log("Done parsing string");
+            });
+        }).catch(function (error) {
+            // API call failed...
+            console.log(error);
+            console.log("Failure with download calendar");
+            cmd = "Whoops! Houston, we have a problem: " + JSON.stringify(error);
+            console.error(cmd);
+        });
+
+        reply=reply+ "\nOSM Event calendar\n";
+        //reply=reply+ "\hhttps://www.meetup.com/OpenStreetMap-Belgium/events/245291588/\n";
+        //msg.reply(reply);
     });
 
     robot.respond("/lost$/i", function(msg) {
