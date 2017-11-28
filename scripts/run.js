@@ -235,13 +235,22 @@ module.exports = function(robot) {
                     var event_date = calendar_json[key]['published'][0];
                     var id = calendar_json[key]['id'][0];
 
-                    //var newDate = new Date(event_date);
+                    var eventDate = new Date(datum);
+                    var today = new Date();
+                    //console.log(eventDate.toUTCString());
+                    //console.log(today.toUTCString());
 
-                    //process.exit(1);
-                    reply=reply //+ newDate.toGMTDateString() 
-                        + title
-                        + " :  date: " + event_date
-                        + " ( " +id+" ) " + '\n';
+                    var difference = eventDate - today;
+
+                    // console.log(difference);
+                    if (difference>0) {
+
+                        //process.exit(1);
+                        reply=reply //+ newDate.toGMTDateString() 
+                            + title . "\n" +
+                            + " :  date: " + event_date
+                            + "\n ( " +id+" ) " + '\n';
+                    }
 
                 });
                 msg.reply(reply); 
