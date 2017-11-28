@@ -208,7 +208,7 @@ module.exports = function(robot) {
     });
 
     robot.respond(/(events|calendar)$/i, function(msg) {
-        var reply="";
+        var reply="OSM Event calendar\n";
 
         function parseEventOutput(calendar_json,msg) {
             console.log("processing retrieval ...");
@@ -222,7 +222,7 @@ module.exports = function(robot) {
 
                 Object.keys(calendar_json).forEach(function(key, idx) {
                     // console.dir(calendar_json[key], { depth: null });
-                    //var title = title: [ { _: 'Missing Maps Mapathon at IPIS', '$': { type: 'html' } } ]
+                    // title = title: [ { _: 'Missing Maps Mapathon at IPIS', '$': { type: 'html' } } ]
                     var title = calendar_json[key]['title'][0]['_'];
                     /*
                      *
@@ -231,27 +231,17 @@ module.exports = function(robot) {
                      *       id: [ 'http://maptime.io/belgium/event/2017/12/06/missing-maps-mapathon-ipis' ]
                      */
 
-
                     var event_date = calendar_json[key]['published'][0];
                     var id = calendar_json[key]['id'][0];
-
-                    var eventDate = new Date(datum);
+                    var eventDate = new Date(event_date);
                     var today = new Date();
-                    //console.log(eventDate.toUTCString());
-                    //console.log(today.toUTCString());
-
+                    var dateoptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
                     var difference = eventDate - today;
 
                     // console.log(difference);
                     if (difference>0) {
-
-                        //process.exit(1);
-                        reply=reply //+ newDate.toGMTDateString() 
-                            + title . "\n" +
-                            + " :  date: " + event_date
-                            + "\n ( " +id+" ) " + '\n';
+                        reply+= eventDate.toLocaleDateString("en-US",dateoptions) + " - " + title + "\n" + id +"\n';
                     }
-
                 });
                 msg.reply(reply); 
                 // msg.send("This list is no indication of quality. It's meant to be used along with `changeset` bot command to review changesets"); 
@@ -292,10 +282,6 @@ module.exports = function(robot) {
             cmd = "Whoops! Houston, we have a problem: " + JSON.stringify(error);
             console.error(cmd);
         });
-
-        reply=reply+ "\nOSM Event calendar\n";
-        //reply=reply+ "\hhttps://www.meetup.com/OpenStreetMap-Belgium/events/245291588/\n";
-        //msg.reply(reply);
     });
 
     robot.respond("/lost$/i", function(msg) {
