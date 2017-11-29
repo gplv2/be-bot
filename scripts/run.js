@@ -236,11 +236,15 @@ module.exports = function(robot) {
                     var eventDate = new Date(event_date);
                     var today = new Date();
                     var dateoptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+					// Set them both at zero time so we don't miss out on todays events
+					eventDate.setHours(0,0,0,0);
+					today.setHours(0,0,0,0);
+
                     var difference = eventDate - today;
 
-                    // console.log(difference);
-                    if (difference>0) {
-                        reply+= eventDate.toLocaleDateString("en-US",dateoptions) + " - " + title + "\n" + id +"\n';
+                    console.log(difference);
+                    if (difference>=0) {
+                        reply+= eventDate.toLocaleDateString("en-US",dateoptions) + " - " + title + '\n' + id + '\n';
                     }
                 });
                 msg.reply(reply); 
