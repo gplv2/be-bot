@@ -1,6 +1,6 @@
 // Commands:
 // hubot (changes|hotshots)|motd - shows the active mappers of the moment with number of changesets (about 1 to 2 days data) - motd : mapper of the day, hands you the top 3
-// hubot events - shows the meetup event page link and (hardcoded) upcoming events (API implementation pending)
+// hubot (events|calendar) - shows the meetup event page link and (hardcoded) upcoming events (API implementation pending)
 // hubot changeset <number> - shows links on the changeset to analyse it ( ahavi, osmhv, osm , ...)
 // hubot streets <postcode> [partialstring] - searches for streetlist in postcode
 // hubot streetmap <postcode> [partialstring] [cycle|mapnik] - creates a static image given by the bounds of the street we search
@@ -16,8 +16,7 @@
 // var slackBot = require('slack-bot')('https://hooks.slack.com/services/TT0ANGLKK8/TB0ANVAUH3/SAMsIzvHkcwyzbVEIf6B2aey');
 // var sdk = require("matrix-js-sdk");
 // var client = sdk.createClient("https://matrix.org");
-//
-//
+
 // hubot lost - When you are lost and want to find the way
 
 var config, parseConfig;
@@ -236,9 +235,9 @@ module.exports = function(robot) {
                     var eventDate = new Date(event_date);
                     var today = new Date();
                     var dateoptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-					// Set them both at zero time so we don't miss out on todays events
-					eventDate.setHours(0,0,0,0);
-					today.setHours(0,0,0,0);
+                    // Set them both at zero time so we don't miss out on todays events
+                    eventDate.setHours(0,0,0,0);
+                    today.setHours(0,0,0,0);
 
                     var difference = eventDate - today;
 
