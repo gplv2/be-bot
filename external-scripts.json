@@ -8,5 +8,9 @@
   "hubot-maps",
   "hubot-redis-brain",
   "hubot-rules",
-  "hubot-shipit"
+  "hubot-shipit",
+  "hubot-history",
+  "hubot-brain-inspect",
+  "hubot-rec",
+  "hubot-tell-a-joke"
 ]
