@@ -148,7 +148,7 @@ module.exports = function(robot) {
                 reply="Indian name : Overpass boy: The Overpasswhisperer, Mapper name: Tha Validator.";
                 break;
             case 'joost':
-                reply="Indian name : The OSM planner:  BoardRunner, Mapper name: JOSM what/who?";
+                reply="Indian name : The OSM planner:  BoardRunner, Mapper name: ex-iD editor, JOSM Mistakes are due to 1/8th Dutch blood.";
                 break;
             case 'lodde1949':
                 reply="Indian name : He who maps 24/7: The Mapinator, Mapper name: The-mapper-that-never-sleeps";
@@ -165,6 +165,9 @@ module.exports = function(robot) {
             case 'giphy':
                 reply="Giphy is that 'other bot', communicates solely with moving pics, a bit like transformers' bumblebee only speaks with recorded sounds.  he's a simple bot, I'm complex!";
                 break;
+            case 'timcouwelier':
+                reply="Indian name : The Forum-Lurer - He's in the OSM weekly : Hardcore chatter,  Mapper name: The Motivator";
+                break;
             default:
                 reply="Sorry, " + name + " is way too cool to comment on!";
         }
@@ -174,7 +177,6 @@ module.exports = function(robot) {
 
     robot.respond(/what is @?([\w .\-]+)\?*$/i, function(msg) {
         name = msg.match[1].trim().toLowerCase();
-        //users = robot.brain.usersForFuzzyName(name);
         var reply="";
         switch(name) {
             case 'crab':
@@ -194,10 +196,16 @@ module.exports = function(robot) {
                 reply=reply+"\nGRB data merge is pending the completion of the toolsets and the import case we are setting up.\n";
                 break;
             case 'belgium':
-                reply="\nhttps://wiki.openstreetmap.org/wiki/WikiProject_Belgium\n";
-                reply="Belgian bounding box is: 2.52, 50.64, 5.94, 51.51";
-                reply="\nOur talk-be mailing list is here:\n";
-                reply="https://lists.openstreetmap.org/listinfo/talk-be";
+                reply=reply+"\nhttps://wiki.openstreetmap.org/wiki/WikiProject_Belgium\n";
+                reply=reply+"Belgian bounding box is: 2.52, 50.64, 5.94, 51.51";
+                reply=reply+"\nOur talk-be mailing list is here:\n";
+                reply=reply+"https://lists.openstreetmap.org/listinfo/talk-be";
+                break;
+            case 'highway':
+                reply=reply+"\nHighway key/tag information\n";
+                reply=reply+"\nImplicit tags: https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Access-Restrictions#Belgium";
+                reply=reply+"\nBasic information: https://wiki.openstreetmap.org/wiki/Key:highway";
+                reply=reply+"\n ";
                 break;
             default:
                 reply="Sorry, I don't know anything decent to say about " + name + ". ";
