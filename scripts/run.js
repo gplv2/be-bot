@@ -218,19 +218,21 @@ module.exports = function(robot) {
         var reply="OSM Event calendar\n";
 
         function parseEventOutput(calendar_json,msg) {
+            // console.dir(calendar_json, { depth: null });
             console.log("processing retrieval ...");
-            //console.dir(calendar_json);
 
             if(typeof calendar_json == 'object' && calendar_json !== null) {
                 console.log("Is object");
 
-                var uarray = {};
+                // var uarray = {};
                 // var sodasHad = robot.brain.get('totalSodas') * 1 || 0;
 
                 Object.keys(calendar_json).forEach(function(key, idx) {
-                    // console.dir(calendar_json[key], { depth: null });
+                    //console.dir(idx, { depth: null });
+                    //console.dir(key, { depth: null });
+                    //console.dir(calendar_json[key], { depth: null });
                     // title = title: [ { _: 'Missing Maps Mapathon at IPIS', '$': { type: 'html' } } ]
-                    var title = calendar_json[key]['title'][0]['_'];
+                    var title = calendar_json[key]['title'];
                     /*
                      *
                      *   published: [ '2017-12-06T00:00:00+00:00' ],
@@ -238,8 +240,9 @@ module.exports = function(robot) {
                      *       id: [ 'http://maptime.io/belgium/event/2017/12/06/missing-maps-mapathon-ipis' ]
                      */
 
-                    var event_date = calendar_json[key]['published'][0];
-                    var id = calendar_json[key]['id'][0];
+                    var event_date = calendar_json[key]['date_published'];
+					//console.dir(event_date);
+                    var id = calendar_json[key]['id'];
                     var eventDate = new Date(event_date);
                     var today = new Date();
                     var dateoptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
@@ -263,7 +266,8 @@ module.exports = function(robot) {
         }
 
         // Get Belgian Calendar
-        var url = "http://maptime.io/belgium/feed.xml";
+        //var url = "http://maptime.io/belgium/feed.xml";
+        var url = "https://openstreetmap.be/events.json";
 
         var options = {
             uri: url,
@@ -278,20 +282,25 @@ module.exports = function(robot) {
             json: false // if true: Automatically parses the JSON string in the response
         };
 
-        rp(options).then(function (repos) {
-            console.log('%d length response', repos.length);
-            parseString(repos, function (err, mresult) {
-                console.log("Parsing results");
-                //console.dir(mresult, { depth: null });
-                parseEventOutput(mresult['feed']['entry'],msg);
-                //console.log("Done parsing string");
-            });
-        }).catch(function (error) {
-            // API call failed...
-            console.log(error);
-            console.log("Failure with download calendar");
-            cmd = "Whoops! Houston, we have a problem: " + JSON.stringify(error);
-            console.error(cmd);
+		rp(options).then(function (repos) {
+			console.log('%d length response', repos.length);
+            console.log("Parsing results");
+			var mresult;
+			try {
+				mresult = JSON.parse(repos);
+           		// console.dir(mresult);
+           		console.log("Done parsing string");
+			} catch (e) {
+            	// API call failed...
+            	console.log("Failure with download calendar");
+            	cmd = "Whoops! Houston, we have a problem: " + JSON.stringify(e);
+            	console.error(cmd);
+            	console.error(e);
+				//return console.error(e);
+			}
+			if(typeof mresult == 'object' && mresult !== null) {
+				parseEventOutput(mresult['items'],msg);
+			}
         });
     });
 
