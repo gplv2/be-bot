@@ -89,7 +89,7 @@ function getcache() {
 
 
 module.exports = function(robot) {
-    //console.log(robot);
+    console.log(robot);
     robot.respond(/(wtf|duck me) (.*)/i, function(msg) {
 
         var getDefinition = function(msg, query) {
