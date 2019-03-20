@@ -5,4 +5,12 @@ set -e
 npm install
 export PATH="node_modules/.bin:node_modules/hubot/node_modules/.bin:$PATH"
 
+# normal
 exec node_modules/.bin/hubot --name "BEBOT" "$@"
+
+# debug
+
+#coffee --nodejs --debug node_modules/.bin/hubot -a matrix --name "BEBOT" "$@"
+coffee --nodejs --debug node_modules/.bin/hubot --name "BEBOT" "$@"
+
+

@@ -19,6 +19,55 @@
 
 // hubot lost - When you are lost and want to find the way
 
+process.on
+(
+	'uncaughtException',
+	function (err)
+	{
+		var stack = err.stack;
+		var timeout = 1;
+		
+		// print note to logger
+		logger.log("SERVER CRASHED!");
+		// logger.printLastLogs();
+		logger.log(err, stack);
+		
+		
+		// save log to timestamped logfile
+		// var filename = "crash_" + _2.formatDate(new Date()) + ".log";
+		// logger.log("LOGGING ERROR TO "+filename);
+		// var fs = require('fs');
+		// fs.writeFile('logs/'+filename, log);
+		
+		
+		// email log to developer
+		if(helper.Config.get('email_on_error') == 'true')
+		{
+			logger.log("EMAILING ERROR");
+			require('./Mailer'); // this is a simple wrapper around nodemailer http://documentup.com/andris9/nodemailer/
+			helper.Mailer.sendMail("HUBOT NODE SERVER CRASHED", stack);
+			timeout = 10;
+		}
+		
+		// Send signal to clients
+//		logger.log("EMITTING SERVER DOWN CODE");
+//		helper.IO.emit(SIGNALS.SERVER.DOWN, "The server has crashed unexpectedly. Restarting in 10s..");
+		
+		
+		// If we exit straight away, the write log and send email operations wont have time to run
+		setTimeout
+		(
+			function()
+			{
+				logger.log("KILLING PROCESS");
+				process.exit();
+			},
+			// timeout * 1000
+			timeout * 100000 // extra time. pm2 auto-restarts on crash...
+		);
+	}
+);
+
 var config, parseConfig;
 
 parseConfig = require('hubot-config');
@@ -34,6 +83,8 @@ config = parseConfig('hello', {
 
 var request = require('request');
 var rp = require('request-promise');
+
+//global.Olm = require('olm');
 
 var slackBot = require('hubot-matrix');
 // So we can calculate things from source API's
@@ -89,7 +140,7 @@ function getcache() {
 
 
 module.exports = function(robot) {
-    console.log(robot);
+    //console.log(robot);
     robot.respond(/(wtf|duck me) (.*)/i, function(msg) {
 
         var getDefinition = function(msg, query) {
@@ -536,7 +587,7 @@ module.exports = function(robot) {
                     //var sdk = require("matrix-js-sdk");
                     //var client = sdk.createClient("https://matrix.org");
                     var obj = body;
-                    console.log(obj);
+                    //console.log(obj);
 
                     if (obj.error) {
                         msg.reply("API reply: " +obj.error);

@@ -12,6 +12,7 @@
   "hubot-history",
   "hubot-brain-inspect",
   "hubot-rec",
+  "hubot-voting",
   "hubot-belgiumrail",
   "hubot-tell-a-joke"
 ]
