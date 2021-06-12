@@ -534,10 +534,12 @@ module.exports = function(robot) {
         osmhv_url = "http://osmhv.openstreetmap.de/changeset.jsp?id=" + set;
         achav_url_dev = "http://nrenner.github.io/achavi/?changeset=" + set;
         achav_url = "https://overpass-api.de/achavi/?changeset=" + set;
-        osm_url = "http://www.openstreetmap.org/browse/changeset/" + set;
+        osmcha_url = "https://osmcha.org/changesets/" + set;
+        osm_url = "https://www.openstreetmap.org/browse/changeset/" + set;
 
         var reply = "\nChangeset OSM: " + osm_url + "\n"
             + "Achavi diff   : " + achav_url + "\n"
+            + "OSMCha        : " + osmcha_url + "\n"
             + "OSM Hist view : " + osmhv_url + "\n";
 
         msg.reply(reply);
