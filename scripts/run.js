@@ -28,9 +28,9 @@ process.on
 		var timeout = 1;
 		
 		// print note to logger
-		logger.log("SERVER CRASHED!");
+		console.log("SERVER CRASHED!");
 		// logger.printLastLogs();
-		logger.log(err, stack);
+		console.log(err, stack);
 		
 		
 		// save log to timestamped logfile
@@ -41,13 +41,15 @@ process.on
 		
 		
 		// email log to developer
-		if(helper.Config.get('email_on_error') == 'true')
+		/*
+		if(Config.get('email_on_error') == 'true')
 		{
-			logger.log("EMAILING ERROR");
+			console.log("EMAILING ERROR");
 			require('./Mailer'); // this is a simple wrapper around nodemailer http://documentup.com/andris9/nodemailer/
 			helper.Mailer.sendMail("HUBOT NODE SERVER CRASHED", stack);
 			timeout = 10;
 		}
+		*/
 		
 		// Send signal to clients
 //		logger.log("EMITTING SERVER DOWN CODE");
@@ -59,7 +61,7 @@ process.on
 		(
 			function()
 			{
-				logger.log("KILLING PROCESS");
+				console.log("KILLING PROCESS");
 				process.exit();
 			},
 			// timeout * 1000
@@ -169,7 +171,7 @@ module.exports = function(robot) {
                         response += "[taken from " + results.AbstractSource + " via DuckDuckGo API]";
                         break;
                     default:
-                        response = "Sorry. I have no idea what you mean. Try Uncle Google (http://www.google.com/#q=" + query + ")";
+                        response = "Sorry. I have no idea what you mean. Try Uncle Google (https://www.google.com/#q=" + query + ")";
                 }
                 msg.send(response);
             });
@@ -573,9 +575,9 @@ module.exports = function(robot) {
 
         if(msg.match[1]) {
             if(msg.match[2]) {
-                url = "http://grbtiles.byteless.net/streets/?limit=10&postcode=" + msg.match[1] + "&meta=map&search=" + searchstring;
+                url = "https://grbtiles.byteless.net/streets/?limit=10&postcode=" + msg.match[1] + "&meta=map&search=" + searchstring;
             } else {
-                url = "http://grbtiles.byteless.net/streets/?limit=10&postcode=" + msg.match[1] + "&meta=map";
+                url = "https://grbtiles.byteless.net/streets/?limit=10&postcode=" + msg.match[1] + "&meta=map";
             }
 
             request({
@@ -641,7 +643,7 @@ module.exports = function(robot) {
         // return true;
         if(msg.match[1]) {
             cmd = "Counting streets in postcode " +  msg.match[1];
-            url = "http://grbtiles.byteless.net/streets/?limit=10&postcode=" + msg.match[1] + "&stats=true";
+            url = "https://grbtiles.byteless.net/streets/?limit=10&postcode=" + msg.match[1] + "&stats=true";
 
             request({
                 url: url,
@@ -683,10 +685,10 @@ module.exports = function(robot) {
             var url='';
             if(msg.match[2]) {
                 cmd = "searching for streets in postcode " +  msg.match[1] + " matching string: " + msg.match[2];
-                url = "http://grbtiles.byteless.net/streets/?limit=10&postcode=" + msg.match[1] + "&search=" + msg.match[2];
+                url = "https://grbtiles.byteless.net/streets/?limit=10&postcode=" + msg.match[1] + "&search=" + msg.match[2];
             } else {
                 cmd = "searching for streets in postcode " +  msg.match[1];
-                url = "http://grbtiles.byteless.net/streets/?limit=10&postcode=" + msg.match[1];
+                url = "https://grbtiles.byteless.net/streets/?limit=10&postcode=" + msg.match[1];
             }
             // msg.reply("Searching for streets in postcode `" +  msg.match[1] + "`");
             // http://grbtiles.byteless.net/streets/?postcode=1982msg.match[1] 
